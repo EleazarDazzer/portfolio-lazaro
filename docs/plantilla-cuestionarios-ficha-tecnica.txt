@@ -1,0 +1,174 @@
+FICHA TÉCNICA
+Cuestionario Autoevaluativo Premium
+
+NOMBRE DEL PROYECTO
+Cuestionario Autoevaluativo — Inteligencia Artificial · Manual 2026
+
+TIPO DE PROYECTO
+Plantilla web interactiva de autoevaluación tipo test.
+
+DESCRIPCIÓN GENERAL
+Plantilla HTML autocontenida para crear cuestionarios formativos interactivos. La demo incluye 30 preguntas de opción múltiple basadas en un documento ficticio sobre cómo la inteligencia artificial puede cambiar la vida, el trabajo, la educación, la sanidad, la economía, la creatividad, la regulación y otros ámbitos sociales.
+
+El recurso incluye temporizador, retroalimentación inmediata, barajado aleatorio de respuestas, navegación entre preguntas, barra de progreso, contador de aciertos y pantalla final con resultados personalizados.
+
+DATOS TÉCNICOS
+Formato: HTML único autocontenido (.html)
+Tamaño aproximado: 97 KB
+Dependencias externas: Google Fonts
+Fuentes utilizadas: Cormorant Garamond y Jost
+Logo: PNG incrustado como base64 con fondo transparente, 300 x 300 px
+Lenguajes usados: HTML5, CSS3 y JavaScript vanilla
+Frameworks: Ninguno
+Servidor necesario: No
+Conexión a internet: Solo necesaria para cargar Google Fonts si no están cacheadas
+Compatibilidad: Navegadores modernos en escritorio y móvil: Chrome, Firefox, Safari y Edge
+
+CONTENIDO DEL CUESTIONARIO
+Número de preguntas: 30
+Tipo de pregunta: Opción múltiple
+Opciones por pregunta: 4
+Respuestas correctas: 1 por pregunta
+Fuente del contenido: Documento ficticio utilizado para demo
+Duración configurada: 10 minutos
+
+TEMAS CUBIERTOS EN LA DEMO
+- Automatización parcial.
+- Benchmarks y capacidades de los modelos de IA.
+- Adopción organizativa.
+- Concepto de frontera dentada.
+- Impactos económicos y laborales.
+- Aportes de organismos como FMI, OIT y OCDE.
+- Productividad y estudios sobre IA en el trabajo.
+- Sanidad y apoyo documental clínico.
+- Regulación sanitaria y referencias a FDA/OMS.
+- Educación y uso de IA en aprendizaje.
+- Transporte autónomo y robotaxis.
+- Derecho, evaluación legal y acceso a servicios jurídicos.
+- Seguridad, evaluación de riesgos y marcos de control.
+- Industrias creativas y derechos de autor.
+- Riesgos sociales: privacidad, sesgo, salud mental y dependencia.
+- Gobernanza: AI Act, UNESCO, Consejo de Europa y NIST RMF.
+- Recomendaciones regulatorias y organizativas.
+
+FUNCIONALIDADES IMPLEMENTADAS
+[✓] Temporizador general de 10 minutos con cuenta regresiva.
+[✓] Alerta visual en el último minuto mediante cambio de color y parpadeo.
+[✓] Finalización automática al agotarse el tiempo.
+[✓] Barajado aleatorio de la posición de las respuestas en cada intento.
+[✓] Prevención de posición fija para la respuesta correcta.
+[✓] Retroalimentación inmediata al responder.
+[✓] Mensaje de acierto con explicación de la respuesta correcta.
+[✓] Mensaje de error con indicación de la respuesta correcta.
+[✓] Explicación de por qué las demás opciones son incorrectas.
+[✓] Barra de progreso con porcentaje de preguntas respondidas.
+[✓] Contador de aciertos en tiempo real.
+[✓] Navegación Anterior / Siguiente.
+[✓] Barra de controles fija tipo sticky.
+[✓] Separación visual de los controles respecto al borde inferior.
+[✓] Mejora de usabilidad en móvil y escritorio.
+[✓] Opción de avance automático tras responder.
+[✓] Casilla activable para avance automático en pantalla de inicio.
+[✓] Scroll automático a la explicación después de responder.
+[✓] Pantalla de resultados con anillo de porcentaje.
+[✓] Insignia de nivel según puntuación.
+[✓] Niveles: Sobresaliente, Notable, Aprobado y Necesita mejorar.
+[✓] Veredicto descriptivo según resultado.
+[✓] Feedback personalizado según porcentaje obtenido.
+[✓] Mensaje específico para preguntas sin responder.
+[✓] Mensaje específico si se agota el tiempo.
+[✓] Estadísticas finales: aciertos, preguntas respondidas y tiempo usado.
+[✓] Revisión detallada de las 30 preguntas.
+[✓] Botón para repetir la evaluación.
+
+DISEÑO VISUAL
+Estilo general: Premium, elegante y formativo.
+Fondo: Blanco con degradado crema.
+Paleta principal:
+- Oro: #b8923a / #cda94f / #8a6c24
+- Carmesí: #8e1b2d / #5e0f1c
+- Tinta: #2a2420
+- Gris cálido: #5b524a
+- Verde acierto: #3d7a4b
+- Rojo error: #a83246
+
+Tipografías:
+- Cormorant Garamond para títulos, enunciados y temporizador.
+- Jost para cuerpo, opciones, botones y elementos de interfaz.
+
+Componentes visuales:
+- Tarjetas blancas.
+- Bordes dorados sutiles.
+- Sombras suaves.
+- Botones contrastados.
+- Feedback diferenciado por color.
+- Pantalla final con anillo de porcentaje.
+- Interfaz responsive.
+
+ESTRUCTURA DEL ARCHIVO
+El proyecto se compone de un único archivo HTML autocontenido.
+Incluye:
+- Marcado HTML.
+- Estilos CSS internos.
+- JavaScript interno.
+- Datos del cuestionario.
+- Logo incrustado como base64.
+
+ARCHIVOS DEL PROYECTO
+cuestionario_autoevaluativo.html: plantilla completa.
+ficha_del_proyecto.txt: ficha original/documentación base.
+plantilla-cuestionarios-portfolio.txt: ficha resumida para portfolio.
+plantilla-cuestionarios-ficha-tecnica.txt: documentación técnica organizada.
+
+PERSONALIZACIÓN DEL CUESTIONARIO
+Para cambiar las preguntas:
+1. Abrir el archivo .html con un editor de texto o código.
+2. Localizar el array const QUESTIONS = [...].
+3. Editar cada objeto de pregunta.
+4. Modificar el enunciado en el campo q.
+5. Modificar las opciones en el array o.
+6. Modificar el índice de la respuesta correcta en el campo a.
+7. Modificar la explicación de acierto en el campo ok.
+8. Modificar la explicación de error en el campo ko.
+
+Para cambiar el logo:
+Sustituir el string base64 en el atributo src de la imagen con clase logo.
+
+Para cambiar el tiempo:
+Modificar la constante const DURATION = 10*60;
+El valor está expresado en segundos. Por ejemplo, 15*60 equivale a 15 minutos.
+
+Para cambiar el número de preguntas:
+Añadir o eliminar objetos dentro del array QUESTIONS. El sistema adapta automáticamente el progreso, los resultados y la revisión final.
+
+USO PREVISTO
+- Autoevaluaciones formativas.
+- Recursos e-learning.
+- Actividades interactivas para Moodle.
+- Cuestionarios de repaso.
+- Materiales de apoyo para cursos online.
+- Demos de portfolio profesional.
+
+LIMITACIONES ACTUALES
+- No guarda resultados en base de datos.
+- No exporta calificaciones automáticamente.
+- No integra autenticación de usuarios.
+- No envía resultados a Moodle por sí mismo.
+- Las fuentes externas dependen de Google Fonts si no están disponibles en caché.
+
+POSIBLES MEJORAS FUTURAS
+- Exportar resultados en PDF o CSV.
+- Guardar progreso localmente.
+- Añadir modo banco de preguntas.
+- Seleccionar número de preguntas por intento.
+- Crear versión SCORM o integración más directa con Moodle.
+- Añadir panel de configuración visual.
+- Separar preguntas en archivo JSON externo.
+- Incorporar modo oscuro.
+- Añadir accesibilidad avanzada con navegación por teclado y atributos ARIA ampliados.
+
+NOTAS
+No requiere servidor. Puede abrirse directamente en cualquier navegador haciendo doble clic sobre el archivo .html. Todo el código, estilos y datos están incluidos en un único archivo para facilitar la distribución, edición y demostración.
+
+FECHA DE CREACIÓN
+30 de mayo de 2026
