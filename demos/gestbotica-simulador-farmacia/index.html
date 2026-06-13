@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestBotica · Simulador de Gestión Farmacéutica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1f7a5c;--green-d:#155943;--green-l:#2a9b75;--green-pale:#e9f5f0;
+  --bar:#143d30;--bar-l:#1d5240;
+  --ink:#1a2420;--ink-soft:#46554e;--ink-dim:#7d8d85;
+  --bg:#eef2f0;--panel:#ffffff;--line:#d4ded9;--line-soft:#e6ece9;
+  --amber:#c87f1a;--amber-bg:#fdf4e3;
+  --red:#c0392b;--red-bg:#fcecea;
+  --blue:#2c6f9b;--blue-bg:#eaf2f8;
+  --purple:#6b4f9b;--purple-bg:#f0ebf8;
+  --hl:#fff7d6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Libre Franklin',sans-serif;font-size:13px;color:var(--ink);background:var(--bg);
+  height:100vh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* TOP BAR (sin menú redundante: marca + estado + acción contextual) */
+.topbar{background:linear-gradient(180deg,var(--bar-l),var(--bar));color:#dfeee8;display:flex;align-items:center;
+  height:48px;flex:0 0 auto;padding:0 14px;gap:12px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{width:32px;height:32px;border-radius:8px;background:#fff;display:grid;place-items:center;color:var(--green);font-weight:700;font-size:18px;font-family:'JetBrains Mono'}
+.brand b{font-weight:700;font-size:15px;color:#fff}
+.brand span{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5);display:block;margin-top:-2px}
+.topbar .ctx{display:flex;align-items:center;gap:8px;margin-left:18px;padding-left:18px;border-left:1px solid rgba(255,255,255,.12)}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11px;color:rgba(255,255,255,.65)}
+.topbar .conn{display:flex;align-items:center;gap:6px}
+.topbar .dot{width:8px;height:8px;border-radius:50%;background:#4fd18a;box-shadow:0 0 6px #4fd18a}
+.tbtn{font-family:'Libre Franklin';font-weight:600;font-size:12px;padding:6px 13px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.1);color:#eafaf3;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.tbtn:hover{background:rgba(255,255,255,.2)}
+.tbtn.on{background:#fff;color:var(--green-d)}
+
+.body{flex:1;display:flex;overflow:hidden}
+.nav{width:192px;background:var(--bar);flex:0 0 auto;padding:8px 0;overflow-y:auto;display:flex;flex-direction:column}
+.nav .grp{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:14px 16px 5px;font-weight:600}
+.nav .it{display:flex;align-items:center;gap:11px;padding:9px 16px;cursor:pointer;color:#bcd4cb;font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.nav .it:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav .it.on{background:var(--green-d);border-left-color:var(--green-l);color:#fff;font-weight:600}
+.nav .it svg{width:17px;height:17px;flex:0 0 auto;opacity:.85}
+.nav .it .kbd{margin-left:auto;font-size:9px;font-family:'JetBrains Mono';color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:0 4px}
+.nav .it .bdg{margin-left:auto;font-size:10px;font-weight:700;background:var(--amber);color:#fff;border-radius:99px;padding:0 7px}
+
+.work{flex:1;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.whead{flex:0 0 auto;padding:14px 22px 0}
+.wtitle{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.wsub{font-size:12px;color:var(--ink-dim);margin-top:1px}
+.wbody{flex:1;overflow-y:auto;padding:16px 22px 22px}
+
+.status{height:26px;flex:0 0 auto;background:var(--green-d);color:#cfe9df;display:flex;align-items:center;padding:0 14px;gap:18px;font-size:11px;font-family:'JetBrains Mono'}
+.status .sep{margin-left:auto}.status b{color:#fff;font-weight:500}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.btn{font-family:'Libre Franklin';font-weight:600;font-size:12.5px;padding:8px 16px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.pri{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.pri:hover{background:var(--green-d);color:#fff}
+.btn.danger{background:#fff;color:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--red);color:#fff}
+.btn svg{width:15px;height:15px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.tag{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+.tag.rx{background:var(--red-bg);color:var(--red)}.tag.libre{background:var(--green-pale);color:var(--green)}
+.tag.low{background:var(--amber-bg);color:var(--amber)}.tag.ok{background:var(--green-pale);color:var(--green)}
+.tag.iva{background:var(--blue-bg);color:var(--blue)}
+.tag.exp{background:var(--red-bg);color:var(--red)}.tag.soon{background:var(--amber-bg);color:var(--amber)}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:var(--green-pale);color:var(--green-d);text-align:left;padding:9px 12px;font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line);position:sticky;top:0}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+tbody tr:hover{background:var(--green-pale)}
+.num{text-align:right;font-family:'JetBrains Mono'}
+
+input,select{font-family:'Libre Franklin';font-size:13px;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);outline:none;transition:border .15s}
+input:focus,select:focus{border-color:var(--green)}
+input.search{font-family:'JetBrains Mono';font-size:14px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.kpi.g::before{background:var(--green)}.kpi.a::before{background:var(--amber)}.kpi.b::before{background:var(--blue)}.kpi.r::before{background:var(--red)}
+.kpi .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);font-weight:600}
+.kpi .val{font-size:28px;font-weight:700;font-family:'JetBrains Mono';margin-top:4px;line-height:1}
+.kpi .sub{font-size:11px;color:var(--ink-dim);margin-top:4px}
+
+/* POS */
+.pos{display:grid;grid-template-columns:1fr 360px;gap:14px;height:100%}
+.pos.guided{grid-template-columns:1fr 360px 250px}
+.pos-main{display:flex;flex-direction:column;gap:12px;min-height:0}
+.pos-search{display:flex;gap:10px;align-items:center}
+.pos-search input{flex:1}
+.pos-results{flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.pos-side{display:flex;flex-direction:column;gap:12px;min-height:0}
+.ticket{flex:1;background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.ticket-hd{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--green-pale)}
+.ticket-hd b{color:var(--green-d);font-size:13px}
+.ticket-items{flex:1;overflow-y:auto;padding:6px}
+.ti{display:flex;gap:8px;align-items:center;padding:8px;border-radius:7px;border:1px solid var(--line-soft);margin-bottom:5px}
+.ti.rxline{border-left:3px solid var(--red)}
+.ti .n{flex:1;min-width:0}.ti .n b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti .n span{font-size:10.5px;color:var(--ink-dim);font-family:'JetBrains Mono'}
+.ti .qty{display:flex;align-items:center;gap:4px}
+.ti .qty button{width:22px;height:22px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer;font-weight:700;color:var(--green)}
+.ti .price{font-family:'JetBrains Mono';font-weight:600;font-size:12.5px;min-width:54px;text-align:right}
+.ti .del{cursor:pointer;color:var(--ink-dim);font-size:16px;padding:0 2px}.ti .del:hover{color:var(--red)}
+.ticket-foot{border-top:2px solid var(--line);padding:12px 14px;background:var(--green-pale)}
+.tline{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:var(--ink-soft)}
+.tline.total{font-size:20px;font-weight:700;color:var(--green-d);font-family:'JetBrains Mono';margin-top:6px;padding-top:8px;border-top:1px dashed var(--line)}
+.empty-ticket{flex:1;display:grid;place-items:center;color:var(--ink-dim);font-size:13px;text-align:center;padding:30px}
+.cust-box{padding:10px 12px;border:1px dashed var(--line);border-radius:8px;font-size:12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.cust-box.set{border-style:solid;border-color:var(--green);background:var(--green-pale)}
+
+/* Guided panel */
+.guide{background:#fff;border:1px solid var(--purple);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.guide-hd{background:var(--purple);color:#fff;padding:11px 14px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.guide-hd .x{cursor:pointer;opacity:.8}
+.guide-bd{padding:12px;overflow-y:auto}
+.gstep{display:flex;gap:10px;padding:9px;border-radius:8px;margin-bottom:6px;font-size:12px;background:var(--bg);border:1px solid var(--line-soft)}
+.gstep.done{background:var(--green-pale);border-color:var(--green-l)}
+.gstep.cur{background:var(--purple-bg);border-color:var(--purple)}
+.gstep .chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink-dim);flex:0 0 auto;display:grid;place-items:center;font-size:12px;font-weight:700}
+.gstep.done .chk{background:var(--green);border-color:var(--green);color:#fff}
+.gstep.cur .chk{border-color:var(--purple);color:var(--purple)}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(20,40,30,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-ov.show{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;animation:mIn .25s ease;max-height:90vh;display:flex;flex-direction:column}
+@keyframes mIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
+.modal-hd{background:var(--green);color:#fff;padding:16px 20px;font-size:16px;font-weight:700;flex:0 0 auto}
+.modal-hd.purple{background:var(--purple)}.modal-hd.amber{background:var(--amber)}
+.modal-bd{padding:20px;overflow-y:auto}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:var(--bg);flex:0 0 auto}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.pay-opt{padding:14px;border:2px solid var(--line);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s}
+.pay-opt:hover{border-color:var(--green)}.pay-opt.on{border-color:var(--green);background:var(--green-pale)}
+.pay-opt .ic{font-size:22px}.pay-opt .l{font-weight:600;font-size:12px;margin-top:4px}
+.field{margin-bottom:12px}.field label{display:block;font-size:11px;font-weight:600;color:var(--ink-soft);margin-bottom:4px;letter-spacing:.03em;text-transform:uppercase}
+.field input,.field select{width:100%}
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-d);color:#fff;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:all .3s;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:var(--red)}.toast.warn{background:var(--amber)}
+.filters{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.filters input,.filters select{font-size:12.5px;padding:7px 10px}
+.hint{font-size:11px;color:var(--ink-dim);background:var(--blue-bg);border:1px solid #cfe0ee;border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
+.hint svg{width:16px;height:16px;flex:0 0 auto;color:var(--blue);margin-top:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.scrollbox{max-height:calc(100vh - 240px);overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cotejo-rx{border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.cotejo-rx.sel{border-color:var(--green);background:var(--green-pale)}
+.cotejo-rx .ck{width:20px;height:20px;border-radius:5px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;color:#fff}
+.cotejo-rx.sel .ck{background:var(--green);border-color:var(--green)}
+.lot-row{display:flex;justify-content:space-between;font-size:11px;font-family:'JetBrains Mono';padding:3px 0;color:var(--ink-soft)}
+.subst{background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:10px;margin-top:8px;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><div class="logo">℞</div><div><b>GestBotica</b><span>Simulador · Aula</span></div></div>
+  <div class="ctx" id="ctxActions"></div>
+  <div class="right">
+    <span class="conn"><span class="dot"></span> Receta-e conectada</span>
+    <span id="clock" class="mono"></span>
+  </div>
+</div>
+
+<div class="body">
+  <nav class="nav">
+    <div class="grp">Mostrador</div>
+    <div class="it on" data-m="pos" onclick="nav('pos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg> Dispensación <span class="kbd">F2</span></div>
+    <div class="it" data-m="clientes" onclick="nav('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg> Clientes</div>
+    <div class="grp">Trastienda</div>
+    <div class="it" data-m="almacen" onclick="nav('almacen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg> Almacén <span class="kbd">F4</span></div>
+    <div class="it" data-m="pedidos" onclick="nav('pedidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1 4h12l-2 9H8L6 2z"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg> Pedidos <span class="bdg" id="encBadge" style="display:none"></span></div>
+    <div class="it" data-m="recepcion" onclick="nav('recepcion')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="M9 12l2 2 4-4"/></svg> Recepción <span class="bdg" id="recBadge" style="display:none"></span></div>
+    <div class="grp">Gestión</div>
+    <div class="it" data-m="recetas" onclick="nav('recetas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h14v18l-7-3-7 3z"/></svg> Recetas</div>
+    <div class="it" data-m="caja" onclick="nav('caja')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg> Caja <span class="kbd">F7</span></div>
+    <div class="it" data-m="informes" onclick="nav('informes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Informes</div>
+  </nav>
+
+  <div class="work">
+    <div class="whead"><div class="wtitle" id="wtitle">Dispensación</div><div class="wsub" id="wsub">Punto de venta</div></div>
+    <div class="wbody" id="wbody"></div>
+  </div>
+</div>
+
+<div class="status">
+  <span>Vendedor: <b>Alumno/a</b></span><span>Farmacia: <b>Botica de Prácticas</b></span>
+  <span class="sep">Ventas hoy: <b id="stSales">0,00 €</b></span><span>Tickets: <b id="stTickets">0</b></span>
+  <span>F2 Venta · F4 Almacén · F7 Caja</span>
+</div>
+
+<div class="modal-ov" id="modalOv"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DB = {"meds": [{"cn": "650451", "name": "Paracetamol Cinfa 1g 40 comp", "lab": "Normon", "cat": "Analgésico", "pa": "Paracetamol", "pvp": 3.36, "cost": 2.4, "iva": 4, "min": 7, "rx": true, "loc": "C-19", "lots": [{"lote": "L9779", "exp": "02/2026", "qty": 45}]}, {"cn": "650790", "name": "Paracetamol Normon 1g 40 comp", "lab": "Normon", "cat": "Analgésico", "pa": "Paracetamol", "pvp": 3.01, "cost": 2.15, "iva": 4, "min": 5, "rx": true, "loc": "D-12", "lots": [{"lote": "L4943", "exp": "02/2027", "qty": 29}]}, {"cn": "651138", "name": "Ibuprofeno Cinfa 600mg 40 comp", "lab": "Sandoz", "cat": "Antiinflamatorio", "pa": "Ibuprofeno", "pvp": 4.34, "cost": 3.1, "iva": 4, "min": 14, "rx": true, "loc": "A-93", "lots": [{"lote": "L1812", "exp": "07/2028", "qty": 47}]}, {"cn": "651554", "name": "Ibuprofeno Kern 600mg 40 comp", "lab": "Esteve", "cat": "Antiinflamatorio", "pa": "Ibuprofeno", "pvp": 3.99, "cost": 2.85, "iva": 4, "min": 11, "rx": true, "loc": "B-24", "lots": [{"lote": "L6054", "exp": "10/2026", "qty": 42}]}, {"cn": "652055", "name": "Amoxicilina Normon 500mg 24 caps", "lab": "Esteve", "cat": "Antibiótico", "pa": "Amoxicilina", "pvp": 6.93, "cost": 4.95, "iva": 4, "min": 6, "rx": true, "loc": "A-14", "lots": []}, {"cn": "652683", "name": "Omeprazol Cinfa 20mg 28 caps", "lab": "Stada", "cat": "Digestivo", "pa": "Omeprazol", "pvp": 5.39, "cost": 3.85, "iva": 4, "min": 13, "rx": true, "loc": "C-43", "lots": [{"lote": "L8424", "exp": "10/2027", "qty": 30}]}, {"cn": "653518", "name": "Omeprazol Sandoz 20mg 28 caps", "lab": "Stada", "cat": "Digestivo", "pa": "Omeprazol", "pvp": 4.9, "cost": 3.5, "iva": 4, "min": 8, "rx": true, "loc": "D-52", "lots": [{"lote": "L9111", "exp": "09/2027", "qty": 41}]}, {"cn": "653758", "name": "Enalapril Stada 20mg 28 comp", "lab": "Bayer", "cat": "Cardiovascular", "pa": "Enalapril", "pvp": 3.85, "cost": 2.75, "iva": 4, "min": 13, "rx": true, "loc": "A-29", "lots": [{"lote": "L9011", "exp": "03/2027", "qty": 20}]}, {"cn": "654464", "name": "Loratadina Cinfa 10mg 20 comp", "lab": "Ratiopharm", "cat": "Antihistamínico", "pa": "Loratadina", "pvp": 3.08, "cost": 2.2, "iva": 10, "min": 10, "rx": false, "loc": "D-22", "lots": [{"lote": "L9137", "exp": "10/2027", "qty": 51}]}, {"cn": "654860", "name": "Simvastatina Teva 20mg 28 comp", "lab": "Teva", "cat": "Cardiovascular", "pa": "Simvastatina", "pvp": 4.76, "cost": 3.4, "iva": 4, "min": 12, "rx": true, "loc": "D-61", "lots": [{"lote": "L6072", "exp": "01/2026", "qty": 25}, {"lote": "L8301", "exp": "11/2028", "qty": 26}]}, {"cn": "655452", "name": "Metformina Sandoz 850mg 50 comp", "lab": "Sandoz", "cat": "Cardiovascular", "pa": "Metformina", "pvp": 4.13, "cost": 2.95, "iva": 4, "min": 10, "rx": true, "loc": "C-34", "lots": [{"lote": "L1965", "exp": "08/2026", "qty": 46}]}, {"cn": "655979", "name": "Salbutamol inhalador 200 dosis", "lab": "Esteve", "cat": "Respiratorio", "pa": "Salbutamol", "pvp": 5.04, "cost": 3.6, "iva": 4, "min": 11, "rx": true, "loc": "C-37", "lots": [{"lote": "L7580", "exp": "08/2026", "qty": 13}]}, {"cn": "656662", "name": "Azitromicina Normon 500mg 3 comp", "lab": "Bayer", "cat": "Antibiótico", "pa": "Azitromicina", "pvp": 7.56, "cost": 5.4, "iva": 4, "min": 9, "rx": true, "loc": "C-74", "lots": []}, {"cn": "656936", "name": "Naproxeno Cinfa 500mg 40 comp", "lab": "Cinfa", "cat": "Antiinflamatorio", "pa": "Naproxeno", "pvp": 5.74, "cost": 4.1, "iva": 4, "min": 6, "rx": true, "loc": "D-35", "lots": [{"lote": "L4822", "exp": "11/2026", "qty": 12}]}, {"cn": "657344", "name": "Cetirizina Stada 10mg 20 comp", "lab": "Kern Pharma", "cat": "Antihistamínico", "pa": "Cetirizina", "pvp": 3.22, "cost": 2.3, "iva": 10, "min": 5, "rx": false, "loc": "A-89", "lots": [{"lote": "L6220", "exp": "06/2028", "qty": 28}]}, {"cn": "657865", "name": "Atorvastatina Kern 40mg 28 comp", "lab": "Cinfa", "cat": "Cardiovascular", "pa": "Atorvastatina", "pvp": 5.88, "cost": 4.2, "iva": 4, "min": 11, "rx": true, "loc": "B-24", "lots": [{"lote": "L7560", "exp": "08/2026", "qty": 33}]}, {"cn": "658436", "name": "Dexketoprofeno Cinfa 25mg 20 comp", "lab": "Cinfa", "cat": "Analgésico", "pa": "Dexketoprofeno", "pvp": 4.55, "cost": 3.25, "iva": 10, "min": 7, "rx": false, "loc": "B-92", "lots": [{"lote": "L2677", "exp": "01/2028", "qty": 25}]}, {"cn": "658928", "name": "Fluticasona spray nasal", "lab": "Kern Pharma", "cat": "Respiratorio", "pa": "Fluticasona", "pvp": 7.14, "cost": 5.1, "iva": 4, "min": 14, "rx": true, "loc": "C-66", "lots": [{"lote": "L7164", "exp": "10/2026", "qty": 15}]}, {"cn": "659533", "name": "Furosemida Normon 40mg 30 comp", "lab": "Teva", "cat": "Cardiovascular", "pa": "Furosemida", "pvp": 2.45, "cost": 1.75, "iva": 4, "min": 6, "rx": true, "loc": "A-32", "lots": [{"lote": "L8927", "exp": "08/2027", "qty": 34}]}, {"cn": "660003", "name": "Ácido fólico Sandoz 5mg 30 comp", "lab": "Sandoz", "cat": "Vitaminas", "pa": "Ácido fólico", "pvp": 2.94, "cost": 2.1, "iva": 4, "min": 9, "rx": true, "loc": "C-39", "lots": [{"lote": "L1378", "exp": "09/2026", "qty": 50}]}, {"cn": "660150", "name": "Ibuprofeno Cinfa 400mg 30 comp", "lab": "Esteve", "cat": "Antiinflamatorio", "pa": "Ibuprofeno", "pvp": 3.36, "cost": 2.4, "iva": 10, "min": 13, "rx": false, "loc": "C-36", "lots": [{"lote": "L5278", "exp": "12/2026", "qty": 51}]}, {"cn": "660498", "name": "Paracetamol Cinfa 650mg 20 comp", "lab": "Bayer", "cat": "Analgésico", "pa": "Paracetamol", "pvp": 2.52, "cost": 1.8, "iva": 10, "min": 13, "rx": false, "loc": "B-49", "lots": [{"lote": "L4654", "exp": "11/2027", "qty": 21}, {"lote": "L4922", "exp": "04/2028", "qty": 21}]}, {"cn": "661122", "name": "Complejo Vitamínico B 30 comp", "lab": "Almirall", "cat": "Vitaminas", "pa": "Vitaminas B", "pvp": 9.66, "cost": 6.9, "iva": 21, "min": 10, "rx": false, "loc": "C-62", "lots": [{"lote": "L8737", "exp": "05/2026", "qty": 4}, {"lote": "L6640", "exp": "04/2027", "qty": 4}]}, {"cn": "661467", "name": "Vitamina D3 2000UI 60 caps", "lab": "Almirall", "cat": "Vitaminas", "pa": "Colecalciferol", "pvp": 11.9, "cost": 8.5, "iva": 21, "min": 6, "rx": false, "loc": "A-86", "lots": [{"lote": "L4348", "exp": "06/2026", "qty": 33}]}, {"cn": "662245", "name": "Crema hidratante facial 200ml", "lab": "Mylan", "cat": "Dermatológico", "pa": "Cosmético", "pvp": 10.15, "cost": 7.25, "iva": 21, "min": 6, "rx": false, "loc": "C-27", "lots": [{"lote": "L4265", "exp": "12/2027", "qty": 5}, {"lote": "L8109", "exp": "03/2027", "qty": 5}]}, {"cn": "662839", "name": "Gel hidroalcohólico 500ml", "lab": "Mylan", "cat": "Higiene", "pa": "Antiséptico", "pvp": 5.53, "cost": 3.95, "iva": 21, "min": 11, "rx": false, "loc": "B-86", "lots": [{"lote": "L3081", "exp": "03/2026", "qty": 6}, {"lote": "L8624", "exp": "03/2026", "qty": 7}]}, {"cn": "663118", "name": "Suero fisiológico 5ml 30 amp", "lab": "Bayer", "cat": "Higiene", "pa": "Cloruro sódico", "pvp": 3.99, "cost": 2.85, "iva": 21, "min": 13, "rx": false, "loc": "B-41", "lots": [{"lote": "L2683", "exp": "01/2026", "qty": 9}, {"lote": "L3281", "exp": "12/2028", "qty": 9}]}, {"cn": "663495", "name": "Jarabe para la tos 200ml", "lab": "Teva", "cat": "Respiratorio", "pa": "Dextrometorfano", "pvp": 7.84, "cost": 5.6, "iva": 10, "min": 8, "rx": false, "loc": "D-31", "lots": [{"lote": "L6341", "exp": "10/2026", "qty": 37}]}, {"cn": "664372", "name": "Probióticos 30 caps", "lab": "Esteve", "cat": "Digestivo", "pa": "Probióticos", "pvp": 15.96, "cost": 11.4, "iva": 10, "min": 10, "rx": false, "loc": "B-93", "lots": [{"lote": "L7891", "exp": "09/2028", "qty": 49}]}, {"cn": "665028", "name": "Omega 3 90 perlas", "lab": "Kern Pharma", "cat": "Vitaminas", "pa": "Omega 3", "pvp": 20.86, "cost": 14.9, "iva": 21, "min": 13, "rx": false, "loc": "B-38", "lots": [{"lote": "L1064", "exp": "10/2026", "qty": 38}]}, {"cn": "665781", "name": "Protector solar SPF50 100ml", "lab": "Normon", "cat": "Dermatológico", "pa": "Cosmético", "pvp": 17.5, "cost": 12.5, "iva": 21, "min": 6, "rx": false, "loc": "A-44", "lots": [{"lote": "L9492", "exp": "11/2027", "qty": 3}, {"lote": "L8905", "exp": "09/2028", "qty": 3}]}, {"cn": "666184", "name": "Termómetro digital", "lab": "Normon", "cat": "Higiene", "pa": "Dispositivo", "pvp": 9.1, "cost": 6.5, "iva": 21, "min": 5, "rx": false, "loc": "D-69", "lots": [{"lote": "L1456", "exp": "09/2027", "qty": 34}]}, {"cn": "666924", "name": "Tiras reactivas glucosa 50u", "lab": "Esteve", "cat": "Cardiovascular", "pa": "Dispositivo", "pvp": 18.48, "cost": 13.2, "iva": 21, "min": 13, "rx": false, "loc": "D-94", "lots": [{"lote": "L9325", "exp": "08/2027", "qty": 54}]}, {"cn": "667759", "name": "Colirio hidratante 10ml", "lab": "Bayer", "cat": "Dermatológico", "pa": "Hipromelosa", "pvp": 6.16, "cost": 4.4, "iva": 21, "min": 13, "rx": false, "loc": "A-78", "lots": [{"lote": "L3246", "exp": "08/2026", "qty": 45}]}, {"cn": "668202", "name": "Pasta dental encías 75ml", "lab": "Mylan", "cat": "Higiene", "pa": "Cosmético", "pvp": 5.74, "cost": 4.1, "iva": 21, "min": 6, "rx": false, "loc": "C-35", "lots": [{"lote": "L4484", "exp": "02/2027", "qty": 9}, {"lote": "L3530", "exp": "02/2027", "qty": 9}]}, {"cn": "668462", "name": "Champú anticaspa 250ml", "lab": "Mylan", "cat": "Higiene", "pa": "Cosmético", "pvp": 7.42, "cost": 5.3, "iva": 21, "min": 12, "rx": false, "loc": "B-37", "lots": [{"lote": "L3667", "exp": "08/2027", "qty": 15}]}, {"cn": "669109", "name": "Melatonina 1.9mg 60 comp", "lab": "Normon", "cat": "Vitaminas", "pa": "Melatonina", "pvp": 13.72, "cost": 9.8, "iva": 21, "min": 11, "rx": false, "loc": "C-16", "lots": [{"lote": "L6218", "exp": "06/2026", "qty": 34}]}, {"cn": "669796", "name": "Lorazepam Normon 1mg 25 comp", "lab": "Esteve", "cat": "Cardiovascular", "pa": "Lorazepam", "pvp": 2.59, "cost": 1.85, "iva": 4, "min": 12, "rx": true, "loc": "C-92", "lots": [{"lote": "L6431", "exp": "07/2026", "qty": 54}]}], "clients": [{"id": "C001", "name": "María García López", "dni": "12345678A", "phone": "611223344", "points": 120, "debt": 0, "rx": "SAS"}, {"id": "C002", "name": "José Martínez Ruiz", "dni": "23456789B", "phone": "622334455", "points": 45, "debt": 12.5, "rx": "SAS"}, {"id": "C003", "name": "Carmen Fernández Gil", "dni": "34567890C", "phone": "633445566", "points": 310, "debt": 0, "rx": "Privada"}, {"id": "C004", "name": "Antonio Sánchez Mora", "dni": "45678901D", "phone": "644556677", "points": 0, "debt": 0, "rx": "SAS"}, {"id": "C005", "name": "Residencia Los Olivos", "dni": "B12345678", "phone": "655667788", "points": 0, "debt": 340.2, "rx": "Residencia"}, {"id": "C006", "name": "Lucía Romero Díaz", "dni": "56789012E", "phone": "666778899", "points": 78, "debt": 0, "rx": "SAS"}], "providers": [{"id": "P01", "name": "Cofarsur Distribución", "type": "Cooperativa"}, {"id": "P02", "name": "Faredis", "type": "Cooperativa"}, {"id": "P03", "name": "Mayorista Levante", "type": "Mayorista"}], "interactions": [["Ibuprofeno", "Enalapril"], ["Naproxeno", "Furosemida"], ["Lorazepam", "Dextrometorfano"]]};
+let meds=JSON.parse(JSON.stringify(DB.meds));
+let clients=JSON.parse(JSON.stringify(DB.clients));
+/* Enriquecer fichas con datos de perfil e historial (demo) */
+const _cliExtra={
+  C001:{birth:'14/03/1958',addr:'C/ Mayor 12, 2ºA',alergias:'Penicilina',cronicos:['Omeprazol','Enalapril'],pensionista:true},
+  C002:{birth:'02/11/1979',addr:'Av. del Parque 8',alergias:'—',cronicos:['Simvastatina'],pensionista:false},
+  C003:{birth:'25/06/1990',addr:'C/ Sol 3, 1ºB',alergias:'AINE',cronicos:[],pensionista:false},
+  C004:{birth:'30/01/1965',addr:'Plaza España 1',alergias:'—',cronicos:['Metformina'],pensionista:false},
+  C005:{birth:'—',addr:'Ctra. Vieja s/n',alergias:'—',cronicos:[],pensionista:false},
+  C006:{birth:'18/09/1995',addr:'C/ Luna 22',alergias:'—',cronicos:[],pensionista:false},
+};
+clients.forEach(c=>{const e=_cliExtra[c.id]||{};c.birth=e.birth||'—';c.addr=e.addr||'—';c.alergias=e.alergias||'—';c.cronicos=e.cronicos||[];c.pensionista=!!e.pensionista;c.history=[];});
+let providers=DB.providers, interactions=DB.interactions;
+let ticket=[], curClient=null;
+let salesToday=0, ticketsToday=0, cashSales=0, cardSales=0, salesLog=[];
+let pendingOrders=[], encargos=[];
+let rxBlock={id:'BL-2026-001',org:'SAS (electrónica)',recetas:142,importe:1840.50};
+let rxDispensedToday=[];
+let curModule='pos', guided=false, guideSteps=[];
+
+const $=id=>document.getElementById(id);
+const eur=n=>n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+function toast(m,t){const x=$('toast');x.textContent=m;x.className='toast show'+(t?' '+t:'');setTimeout(()=>x.className='toast',2400);}
+
+/* DATE HELPERS — un solo criterio en toda la app. Hoy simulado = 06/2026 */
+const TODAY={mo:6,y:2026};
+function expMonths(exp){const[mo,y]=exp.split('/').map(Number);return (y-TODAY.y)*12+(mo-TODAY.mo);}
+function isExpired(exp){return expMonths(exp)<0;}
+function isSoon(exp){const m=expMonths(exp);return m>=0&&m<=6;}
+function stockOf(m){return m.lots.reduce((s,l)=>s+l.qty,0);}
+function earliestExp(m){if(!m.lots.length)return '—';return m.lots.slice().sort((a,b)=>expMonths(a.exp)-expMonths(b.exp))[0].exp;}
+function medFlag(m){const st=stockOf(m);if(m.lots.some(l=>isExpired(l.exp)))return 'exp';if(st<=m.min)return 'low';if(m.lots.some(l=>isSoon(l.exp)))return 'soon';return 'ok';}
+/* Consumir stock FEFO (primero el que antes caduca) */
+function consume(m,qty){const ls=m.lots.slice().sort((a,b)=>expMonths(a.exp)-expMonths(b.exp));let rem=qty;for(const l of ls){const take=Math.min(l.qty,rem);l.qty-=take;rem-=take;if(rem<=0)break;}m.lots=m.lots.filter(l=>l.qty>0);}
+function addLot(m,lote,exp,qty){const ex=m.lots.find(l=>l.lote===lote&&l.exp===exp);if(ex)ex.qty+=qty;else m.lots.push({lote,exp,qty});}
+
+function tick(){const d=new Date();$('clock').textContent=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});}
+tick();setInterval(tick,30000);
+
+const TITLES={pos:['Dispensación','Punto de venta — escanee o busque un artículo'],clientes:['Clientes','Fichas, fidelización e historial'],
+ almacen:['Almacén','Control de stock, lotes y caducidades'],pedidos:['Pedidos','Propuestas automáticas, encargos y envío'],
+ recepcion:['Recepción de mercancía','Cotejo de albarán y entrada de lotes'],recetas:['Recetas','Bloques, dispensación electrónica y facturación'],
+ caja:['Caja','Arqueo, cierre y devoluciones'],informes:['Informes','Cuadro de mando y análisis']};
+
+function nav(m){curModule=m;
+  document.querySelectorAll('.nav .it').forEach(e=>e.classList.toggle('on',e.dataset.m===m));
+  $('wtitle').textContent=TITLES[m][0];$('wsub').textContent=TITLES[m][1];
+  renderCtx();updBadges();
+  ({pos:renderPOS,clientes:renderClientes,almacen:renderAlmacen,pedidos:renderPedidos,recepcion:renderRecepcion,recetas:renderRecetas,caja:renderCaja,informes:renderInformes}[m])();
+}
+function updBadges(){const r=$('recBadge'),e=$('encBadge');
+  if(pendingOrders.length){r.style.display='';r.textContent=pendingOrders.length;}else r.style.display='none';
+  if(encargos.filter(x=>!x.done).length){e.style.display='';e.textContent=encargos.filter(x=>!x.done).length;}else e.style.display='none';}
+
+/* Acción contextual en la barra superior (sustituye al menú redundante) */
+function renderCtx(){
+  const c=$('ctxActions');
+  if(curModule==='pos'){c.innerHTML=`<button class="tbtn ${guided?'on':''}" onclick="toggleGuide()">🎓 Modo guiado</button><button class="tbtn" onclick="clearTicket()">Nueva venta</button>`;}
+  else if(curModule==='clientes'){c.innerHTML=`<button class="tbtn" onclick="openNewClient()">+ Nuevo cliente</button>`;}
+  else if(curModule==='almacen'){c.innerHTML=`<button class="tbtn" onclick="nav('pedidos')">Generar reposición</button>`;}
+  else if(curModule==='pedidos'){c.innerHTML=`<button class="tbtn" onclick="nav('recepcion')">Ir a recepción</button>`;}
+  else c.innerHTML='';
+}
+
+/* ════════════ POS ════════════ */
+let posQuery='';
+function renderPOS(){
+  $('wbody').innerHTML=`
+    <div class="pos ${guided?'guided':''}">
+      <div class="pos-main">
+        <div class="pos-search">
+          <input class="search" id="posSearch" placeholder="🔍 Escanee o escriba nombre / CN / principio activo…" autocomplete="off" value="${posQuery}">
+          <button class="btn" onclick="document.getElementById('posSearch').focus()">Buscar</button>
+        </div>
+        <div class="pos-results panel" id="posResults"></div>
+      </div>
+      <div class="pos-side">
+        <div class="cust-box ${curClient?'set':''}" id="custBox" onclick="openClientPicker()">
+          ${curClient?`<span>👤 <b>${curClient.name}</b> · ${curClient.points} pts · ${curClient.rx}</span><span style="color:var(--green)">Cambiar</span>`:'<span>👤 Cliente: <b>Anónimo</b></span><span style="color:var(--green)">Asignar</span>'}
+        </div>
+        <div class="ticket">
+          <div class="ticket-hd"><b>Ticket de venta</b><span class="mono" id="ticketCount">0 líneas</span></div>
+          <div class="ticket-items" id="ticketItems"></div>
+          <div class="ticket-foot" id="ticketFoot"></div>
+        </div>
+      </div>
+      ${guided?`<div class="guide"><div class="guide-hd"><span>🎓 Caso práctico</span><span class="x" onclick="toggleGuide()">✕</span></div><div class="guide-bd" id="guideBody"></div></div>`:''}
+    </div>`;
+  const inp=$('posSearch');inp.addEventListener('input',e=>{posQuery=e.target.value;renderResults();});inp.focus();
+  renderResults();renderTicket();if(guided)renderGuide();
+}
+function renderResults(){
+  const q=posQuery.trim().toLowerCase();
+  let list=meds;
+  if(q)list=meds.filter(m=>m.name.toLowerCase().includes(q)||m.cn.includes(q)||m.cat.toLowerCase().includes(q)||m.lab.toLowerCase().includes(q)||m.pa.toLowerCase().includes(q));
+  list=list.slice(0,40);
+  $('posResults').innerHTML=`<table><thead><tr><th>CN</th><th>Artículo</th><th class="num">Stock</th><th class="num">PVP</th><th class="num">IVA</th><th></th></tr></thead>
+    <tbody>${list.map(m=>{const st=stockOf(m);return`<tr>
+      <td class="mono" style="color:var(--ink-dim)">${m.cn}</td>
+      <td><b>${m.name}</b> ${m.rx?'<span class="tag rx">℞</span>':'<span class="tag libre">Libre</span>'}<br><span style="font-size:10.5px;color:var(--ink-dim)">${m.pa} · ${m.cat} · Cad. ${earliestExp(m)} · ${m.loc}</span></td>
+      <td class="num" style="${st<=m.min?'color:var(--amber);font-weight:700':''}">${st}${st<=m.min?(st===0?' ✕':' ⚠'):''}</td>
+      <td class="num"><b>${eur(m.pvp)}</b></td>
+      <td class="num" style="color:var(--ink-dim)">${m.iva}%</td>
+      <td>${st>0?`<button class="btn pri" style="padding:5px 10px" onclick="addToTicket('${m.cn}')">+ Añadir</button>`:`<button class="btn" style="padding:5px 10px" onclick="openEncargo('${m.cn}')">Encargo</button>`}</td>
+    </tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--ink-dim);padding:30px">Sin resultados</td></tr>'}</tbody></table>`;
+}
+function addToTicket(cn){
+  const m=meds.find(x=>x.cn===cn);const st=stockOf(m);
+  if(st<=0){openEncargo(cn);return;}
+  // Interacción
+  const inter=interactions.find(p=>p.includes(m.pa)&&ticket.some(t=>{const tm=meds.find(x=>x.cn===t.cn);return p.includes(tm.pa)&&tm.pa!==m.pa;}));
+  if(inter){toast('⚠ Posible interacción: '+inter.join(' + '),'warn');}
+  const ex=ticket.find(t=>t.cn===cn);
+  if(ex){if(ex.qty>=st){toast('No hay más stock','err');return;}ex.qty++;}
+  else ticket.push({cn,name:m.name,pvp:m.pvp,iva:m.iva,qty:1,rx:m.rx,pa:m.pa});
+  // Sugerir sustitución por genérico más barato
+  const alts=meds.filter(x=>x.pa===m.pa&&x.cn!==m.cn&&stockOf(x)>0&&x.pvp<m.pvp);
+  renderTicket();
+  if(alts.length&&!ex){const cheap=alts.sort((a,b)=>a.pvp-b.pvp)[0];suggestSubst(cn,cheap.cn,m.pvp-cheap.pvp);}
+  if(guided)checkGuide();
+}
+function suggestSubst(curCn,altCn,saving){
+  const alt=meds.find(x=>x.cn===altCn);
+  const box=document.createElement('div');
+  const foot=$('ticketFoot');if(!foot)return;
+  const d=document.createElement('div');d.className='subst';
+  d.innerHTML=`💊 <b>${alt.pa}</b>: existe equivalente más económico <b>${alt.name}</b> (ahorro ${eur(saving)}). <a style="color:var(--green);cursor:pointer;font-weight:600" onclick="doSubst('${curCn}','${altCn}')">Sustituir</a>`;
+  foot.prepend(d);setTimeout(()=>{if(d.parentNode)d.remove();},6000);
+}
+function doSubst(curCn,altCn){const t=ticket.find(x=>x.cn===curCn);if(!t)return;const alt=meds.find(x=>x.cn===altCn);const q=t.qty;ticket=ticket.filter(x=>x.cn!==curCn);const ex=ticket.find(x=>x.cn===altCn);if(ex)ex.qty+=q;else ticket.push({cn:altCn,name:alt.name,pvp:alt.pvp,iva:alt.iva,qty:q,rx:alt.rx,pa:alt.pa});renderTicket();toast('✓ Sustituido por '+alt.name);}
+function chgQty(cn,d){const t=ticket.find(x=>x.cn===cn);const m=meds.find(x=>x.cn===cn);t.qty+=d;if(t.qty<=0)ticket=ticket.filter(x=>x.cn!==cn);else if(t.qty>stockOf(m)){t.qty=stockOf(m);toast('Stock máximo','err');}renderTicket();}
+function delLine(cn){ticket=ticket.filter(x=>x.cn!==cn);renderTicket();}
+
+function renderTicket(){
+  const items=$('ticketItems'),foot=$('ticketFoot');if(!items)return;
+  $('ticketCount').textContent=ticket.length+' línea'+(ticket.length!==1?'s':'');
+  if(!ticket.length){items.innerHTML='<div class="empty-ticket">El ticket está vacío.<br>Añada artículos desde el listado.</div>';foot.innerHTML='';return;}
+  items.innerHTML=ticket.map(t=>`<div class="ti ${t.rx?'rxline':''}">
+    <div class="n"><b>${t.name}</b><span>${t.cn} ${t.rx?'· ℞':''} · IVA ${t.iva}%</span></div>
+    <div class="qty"><button onclick="chgQty('${t.cn}',-1)">−</button><b class="mono" style="min-width:18px;text-align:center">${t.qty}</b><button onclick="chgQty('${t.cn}',1)">+</button></div>
+    <div class="price">${eur(t.pvp*t.qty)}</div><span class="del" onclick="delLine('${t.cn}')">×</span>
+  </div>`).join('');
+  const total=ticket.reduce((s,t)=>s+t.pvp*t.qty,0);
+  // Desglose por tramos de IVA
+  const byIva={};ticket.forEach(t=>{const v=t.pvp*t.qty;const base=v/(1+t.iva/100);const cuota=v-base;if(!byIva[t.iva])byIva[t.iva]={base:0,cuota:0};byIva[t.iva].base+=base;byIva[t.iva].cuota+=cuota;});
+  const hasRx=ticket.some(t=>t.rx);
+  foot.innerHTML=`
+    ${Object.entries(byIva).sort((a,b)=>a[0]-b[0]).map(([r,v])=>`<div class="tline"><span>Base ${r}% IVA</span><span class="mono">${eur(v.base)} · cuota ${eur(v.cuota)}</span></div>`).join('')}
+    ${hasRx?'<div class="tline" style="color:var(--red)"><span>℞ Contiene medicamentos con receta</span></div>':''}
+    <div class="tline total"><span>TOTAL</span><span>${eur(total)}</span></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" style="flex:1" onclick="clearTicket()">Anular</button>
+      <button class="btn pri" style="flex:2" onclick="startCobro(${total})">Cobrar ▸</button>
+    </div>`;
+}
+function clearTicket(){ticket=[];curClient=null;if(curModule==='pos')renderPOS();}
+
+/* Flujo de cobro: si hay ℞ → cotejo de receta electrónica antes de pagar */
+const r2=n=>Math.round(n*100)/100;
+/* Aportación del paciente según tipo de receta (resto lo financia el SNS) */
+function copagoRate(c){if(!c)return 1;if(c.rx==='Privada')return 1;if(c.rx==='MUFACE')return 0.30;if(c.rx==='Residencia')return 0.10;return c.pensionista?0.10:0.40;}
+
+function startCobro(total){
+  if(!ticket.length)return;
+  const rxItems=ticket.filter(t=>t.rx);
+  if(rxItems.length){
+    if(!curClient){toast('Para dispensar receta electrónica, asigne el paciente (tarjeta sanitaria)','warn');openClientPicker();return;}
+    openCotejo(total,rxItems);
+  } else { window._charge={payable:total,financed:0,rate:1,rxPvp:0}; openPay(total); }
+}
+function openCotejo(total,rxItems){
+  window._cotejoSel=new Set(rxItems.map(t=>t.cn));
+  $('modal').innerHTML=`
+    <div class="modal-hd purple">Cotejo de receta electrónica</div>
+    <div class="modal-bd">
+      <div class="hint" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg> Inserte la tarjeta sanitaria de <b>${curClient.name}</b> (${curClient.rx}${curClient.pensionista?' · pensionista':''}) y coteje las prescripciones activas.</div>
+      <div id="cardStep"><button class="btn pri" style="width:100%" onclick="readCard()">💳 Leer tarjeta sanitaria</button></div>
+      <div id="rxList" style="display:none;margin-top:12px"></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" id="cotejoNext" style="display:none" onclick="afterCotejo()">Dispensar y cobrar ▸</button></div>`;
+  window._cotejoItems=rxItems;showModal();
+}
+function readCard(){
+  const rxItems=window._cotejoItems;const rate=copagoRate(curClient);
+  $('cardStep').innerHTML=`<div style="color:var(--green);font-weight:600;font-size:13px">✓ Tarjeta leída · ${curClient.name} (${curClient.rx}) · aportación ${Math.round(rate*100)}%</div>`;
+  const box=$('rxList');box.style.display='';
+  box.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">Prescripciones activas — marque las dispensadas</div>`+
+    rxItems.map(t=>`<div class="cotejo-rx sel" data-cn="${t.cn}" onclick="toggleRx('${t.cn}')"><div class="ck">✓</div><div style="flex:1"><b style="font-size:12.5px">${t.name}</b><br><span style="font-size:11px;color:var(--ink-dim)">${t.pa} · ${t.qty} envase(s) · PVP ${eur(t.pvp*t.qty)} → paga ${eur(t.pvp*t.qty*rate)}</span></div></div>`).join('');
+  $('cotejoNext').style.display='';
+}
+function toggleRx(cn){const el=document.querySelector(`.cotejo-rx[data-cn="${cn}"]`);if(window._cotejoSel.has(cn)){window._cotejoSel.delete(cn);el.classList.remove('sel');el.querySelector('.ck').textContent='';}else{window._cotejoSel.add(cn);el.classList.add('sel');el.querySelector('.ck').textContent='✓';}}
+function afterCotejo(){
+  window._cotejoItems.forEach(t=>{if(!window._cotejoSel.has(t.cn))ticket=ticket.filter(x=>x.cn!==t.cn);});
+  if(!ticket.length){closeModal();renderTicket();toast('No queda nada que cobrar tras el cotejo','warn');return;}
+  window._cotejoDone=true;
+  const rate=copagoRate(curClient);let payable=0,financed=0,rxPvp=0;
+  ticket.forEach(t=>{const v=t.pvp*t.qty;if(t.rx){payable+=v*rate;financed+=v*(1-rate);rxPvp+=v;}else payable+=v;});
+  window._charge={payable:r2(payable),financed:r2(financed),rate,rxPvp:r2(rxPvp)};
+  openPay(window._charge.payable);
+}
+function openPay(total){
+  window._pay='efectivo';const ch=window._charge;
+  $('modal').innerHTML=`
+    <div class="modal-hd">Cobro · ${eur(total)}</div>
+    <div class="modal-bd">
+      <div class="field"><label>Cliente</label><div style="padding:6px 0;font-weight:600">${curClient?curClient.name+' · '+curClient.points+' pts':'Anónimo'}</div></div>
+      ${ch.financed>0?`<div class="hint" style="margin-bottom:12px;background:var(--purple-bg);border-color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> <span><b>Receta financiada</b> · PVP recetas ${eur(ch.rxPvp)}<br>Aportación paciente (${Math.round(ch.rate*100)}%): <b>${eur(ch.rxPvp*ch.rate)}</b> · Financia el SNS: <b>${eur(ch.financed)}</b><br>Se liquidará al organismo en el bloque ${rxBlock.id}.</span></div>`:''}
+      <label style="font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase">Forma de pago</label>
+      <div class="pay-grid" id="payGrid">
+        <div class="pay-opt on" data-p="efectivo" onclick="selPay('efectivo')"><div class="ic">💵</div><div class="l">Efectivo</div></div>
+        <div class="pay-opt" data-p="tarjeta" onclick="selPay('tarjeta')"><div class="ic">💳</div><div class="l">Tarjeta</div></div>
+      </div>
+      <div class="field" id="cashField" style="margin-top:14px"><label>Entregado (efectivo)</label><input id="cashGiven" class="mono" type="number" step="0.01" value="${Math.ceil(total)}" oninput="calcChange(${total})"><div id="changeOut" style="margin-top:6px;font-family:'JetBrains Mono';font-weight:700;color:var(--green-d)"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="confirmSale(${total})">Confirmar cobro</button></div>`;
+  showModal();calcChange(total);
+}
+function selPay(p){window._pay=p;document.querySelectorAll('#payGrid .pay-opt').forEach(e=>e.classList.toggle('on',e.dataset.p===p));$('cashField').style.display=p==='efectivo'?'':'none';}
+function calcChange(total){const g=parseFloat($('cashGiven').value||0);const c=g-total;$('changeOut').textContent=c>=0?'Cambio: '+eur(c):'Falta: '+eur(-c);$('changeOut').style.color=c>=0?'var(--green-d)':'var(--red)';}
+function confirmSale(total){
+  const ch=window._charge||{financed:0,rate:1};
+  const rxLines=ticket.filter(t=>t.rx);
+  const saleClient=curClient;
+  ticket.forEach(t=>{consume(meds.find(x=>x.cn===t.cn),t.qty);});
+  if(window._pay==='efectivo')cashSales+=total;else cardSales+=total;
+  salesToday+=total;ticketsToday++;
+  const sale={id:'V'+(1000+salesLog.length),time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),lines:ticket.map(t=>({cn:t.cn,name:t.name,qty:t.qty,rx:t.rx})),items:ticket.length,total,pay:window._pay,client:saleClient?saleClient.name:'Anónimo',financed:ch.financed,cancelled:false};
+  salesLog.push(sale);
+  if(saleClient){saleClient.points+=Math.floor(total);saleClient.history.push(sale);}
+  // Bloque de receta: solo la parte financiada por el SNS
+  if(rxLines.length&&window._cotejoDone&&ch.financed>0){rxBlock.recetas+=rxLines.length;rxBlock.importe+=ch.financed;rxLines.forEach(t=>rxDispensedToday.push({name:t.name,client:saleClient.name,time:sale.time}));}
+  window._cotejoDone=false;window._charge=null;guideMarkSale();
+  $('stSales').textContent=eur(salesToday);$('stTickets').textContent=ticketsToday;
+  closeModal();
+  const wasGuided=guided;ticket=[];curClient=null;renderPOS();
+  toast('✓ Venta cerrada · cobrado '+eur(total)+(ch.financed>0?' (financia SNS '+eur(ch.financed)+')':''));
+  if(wasGuided)checkGuide();
+}
+
+/* CLIENT PICKER + ALTA REAL */
+function openClientPicker(){
+  $('modal').innerHTML=`<div class="modal-hd">Asignar cliente</div>
+    <div class="modal-bd"><input id="cliSearch" placeholder="Buscar por nombre o DNI…" style="width:100%;margin-bottom:12px" oninput="filterCli()"><div id="cliList" style="max-height:260px;overflow-y:auto"></div></div>
+    <div class="modal-ft"><button class="btn" onclick="openNewClient()">+ Nuevo</button><button class="btn" onclick="setClient(null)">Anónimo</button><button class="btn" onclick="closeModal()">Cerrar</button></div>`;
+  showModal();filterCli();
+}
+function filterCli(){const q=($('cliSearch').value||'').toLowerCase();
+  $('cliList').innerHTML=clients.filter(c=>c.name.toLowerCase().includes(q)||c.dni.toLowerCase().includes(q)).map(c=>`<div onclick="setClient('${c.id}')" style="padding:10px 12px;border:1px solid var(--line-soft);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between" onmouseover="this.style.background='var(--green-pale)'" onmouseout="this.style.background='#fff'"><span><b>${c.name}</b><br><span style="font-size:11px;color:var(--ink-dim)" class="mono">${c.dni} · ${c.rx}</span></span><span style="text-align:right;font-size:11px"><b style="color:var(--green)">${c.points} pts</b>${c.debt>0?'<br><span style="color:var(--red)">Debe '+eur(c.debt)+'</span>':''}</span></div>`).join('');}
+function setClient(id){curClient=id?clients.find(c=>c.id===id):null;closeModal();if(curModule==='pos')renderPOS();if(guided)checkGuide();}
+function openNewClient(){
+  $('modal').innerHTML=`<div class="modal-hd">Nuevo cliente</div>
+    <div class="modal-bd">
+      <div class="field"><label>Nombre completo</label><input id="ncName" placeholder="Nombre y apellidos"></div>
+      <div class="field"><label>DNI / CIF</label><input id="ncDni" placeholder="00000000X"></div>
+      <div class="field"><label>Teléfono</label><input id="ncPhone" placeholder="600000000"></div>
+      <div class="field"><label>Tipo de receta</label><select id="ncRx"><option>SAS</option><option>MUFACE</option><option>Privada</option><option>Residencia</option></select></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="saveClient()">Guardar</button></div>`;
+  showModal();
+}
+function saveClient(){const n=$('ncName').value.trim();if(!n){toast('Indique el nombre','err');return;}
+  const c={id:'C'+String(clients.length+1).padStart(3,'0'),name:n,dni:$('ncDni').value.trim()||'—',phone:$('ncPhone').value.trim()||'—',points:0,debt:0,rx:$('ncRx').value,birth:'—',addr:'—',alergias:'—',cronicos:[],pensionista:false,history:[]};
+  clients.push(c);closeModal();toast('✓ Cliente dado de alta: '+n);
+  if(curModule==='clientes')renderClientes();
+}
+
+/* ENCARGOS */
+function openEncargo(cn){const m=meds.find(x=>x.cn===cn);
+  $('modal').innerHTML=`<div class="modal-hd amber">Crear encargo</div>
+    <div class="modal-bd"><div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> <b>${m.name}</b> está sin stock. Cree un encargo para avisar al cliente cuando llegue del proveedor.</div>
+      <div class="field"><label>Artículo</label><div style="padding:6px 0;font-weight:600">${m.name}</div></div>
+      <div class="field"><label>Cliente</label><div style="padding:6px 0">${curClient?curClient.name:'Anónimo — recomendable asignar cliente'}</div></div>
+      <div class="field"><label>Unidades</label><input id="encQty" type="number" value="1" min="1" style="width:90px"></div></div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="saveEncargo('${cn}')">Crear encargo</button></div>`;
+  showModal();
+}
+function saveEncargo(cn){const m=meds.find(x=>x.cn===cn);encargos.push({id:'ENC'+(100+encargos.length),cn,name:m.name,qty:+$('encQty').value||1,client:curClient?curClient.name:'Anónimo',date:new Date().toLocaleDateString('es-ES'),done:false});closeModal();updBadges();toast('✓ Encargo creado · '+m.name);}
+
+/* ════════════ CLIENTES ════════════ */
+function renderClientes(){
+  $('wbody').innerHTML=`<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Pulse sobre un cliente para ver su ficha completa: datos, crónicos, fidelización, deuda e historial de dispensaciones.</div>
+    <div class="row" style="display:flex;gap:10px;margin-bottom:14px"><button class="btn pri" onclick="openNewClient()">+ Nuevo cliente</button><input placeholder="Buscar cliente…" id="cliF" oninput="renderCliTable()" style="flex:1"></div>
+    <div class="scrollbox"><table id="cliTable"></table></div>`;
+  renderCliTable();
+}
+function renderCliTable(){const q=($('cliF')?.value||'').toLowerCase();
+  $('cliTable').innerHTML=`<thead><tr><th>ID</th><th>Nombre</th><th>DNI/CIF</th><th>Teléfono</th><th>Tipo receta</th><th class="num">Puntos</th><th class="num">Deuda</th><th></th></tr></thead>
+   <tbody>${clients.filter(c=>c.name.toLowerCase().includes(q)||c.dni.toLowerCase().includes(q)).map(c=>`<tr style="cursor:pointer" onclick="openClientProfile('${c.id}')"><td class="mono" style="color:var(--ink-dim)">${c.id}</td><td><b>${c.name}</b></td><td class="mono">${c.dni}</td><td class="mono">${c.phone}</td><td>${c.rx}${c.pensionista?' · pens.':''}</td><td class="num"><b style="color:var(--green)">${c.points}</b></td><td class="num" style="${c.debt>0?'color:var(--red);font-weight:700':''}">${eur(c.debt)}</td><td style="color:var(--green);font-weight:600">Ver ficha ▸</td></tr>`).join('')}</tbody>`;}
+
+function openClientProfile(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const hist=c.history.slice().reverse();
+  const gasto=c.history.filter(h=>!h.cancelled).reduce((s,h)=>s+h.total,0);
+  $('wbody').innerHTML=`
+    <button class="btn" onclick="renderClientes()" style="margin-bottom:14px">‹ Volver al listado</button>
+    <div class="grid2" style="align-items:start">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div style="width:54px;height:54px;border-radius:14px;background:var(--green-pale);display:grid;place-items:center;font-size:24px;color:var(--green);font-weight:700">${c.name.charAt(0)}</div>
+          <div><div style="font-size:18px;font-weight:700">${c.name}</div><div style="font-size:12px;color:var(--ink-dim)" class="mono">${c.id} · ${c.dni}</div></div>
+        </div>
+        <table style="font-size:12.5px"><tbody>
+          <tr><td style="color:var(--ink-dim);width:42%">Teléfono</td><td class="mono">${c.phone}</td></tr>
+          <tr><td style="color:var(--ink-dim)">Fecha nac.</td><td class="mono">${c.birth}</td></tr>
+          <tr><td style="color:var(--ink-dim)">Dirección</td><td>${c.addr}</td></tr>
+          <tr><td style="color:var(--ink-dim)">Tipo de receta</td><td><b>${c.rx}</b>${c.pensionista?' · pensionista':''} <span style="color:var(--ink-dim)">(aportación ${Math.round(copagoRate(c)*100)}%)</span></td></tr>
+          <tr><td style="color:var(--ink-dim)">Alergias</td><td style="${c.alergias!=='—'?'color:var(--red);font-weight:600':''}">${c.alergias}</td></tr>
+          <tr><td style="color:var(--ink-dim)">Tratamientos crónicos</td><td>${c.cronicos.length?c.cronicos.join(', '):'—'}</td></tr>
+        </tbody></table>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn pri" onclick="useClientInSale('${c.id}')">🛒 Usar en venta</button>
+          <button class="btn" onclick="editClient('${c.id}')">✎ Editar</button>
+          ${c.debt>0?`<button class="btn" onclick="settleDebt('${c.id}')">Saldar deuda (${eur(c.debt)})</button>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="kpis" style="grid-template-columns:1fr 1fr">
+          <div class="kpi g" style="padding:14px"><div class="lbl">Puntos fidelidad</div><div class="val" style="font-size:24px">${c.points}</div></div>
+          <div class="kpi ${c.debt>0?'r':'b'}" style="padding:14px"><div class="lbl">Deuda</div><div class="val" style="font-size:24px">${eur(c.debt)}</div></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14px;margin-bottom:10px">Historial de dispensaciones <span style="font-weight:400;color:var(--ink-dim);font-size:12px">— ${c.history.filter(h=>!h.cancelled).length} ventas · ${eur(gasto)}</span></h3>
+          <div style="max-height:300px;overflow-y:auto">
+          ${hist.length?`<table><thead><tr><th>Hora</th><th>Artículos</th><th class="num">Importe</th></tr></thead><tbody>${hist.map(h=>`<tr style="${h.cancelled?'opacity:.5':''}"><td class="mono">${h.time}</td><td style="font-size:11.5px">${h.lines.map(l=>l.name+(l.qty>1?' ×'+l.qty:'')+(l.rx?' ℞':'')).join('<br>')}</td><td class="num"><b>${eur(h.total)}</b>${h.cancelled?'<br><span class="tag" style="background:var(--red-bg);color:var(--red)">Devuelta</span>':''}</td></tr>`).join('')}</tbody></table>`:'<div style="text-align:center;color:var(--ink-dim);padding:30px">Sin dispensaciones registradas.<br>Las ventas asignadas a este cliente aparecerán aquí.</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+function useClientInSale(id){curClient=clients.find(x=>x.id===id);toast('✓ '+curClient.name+' asignado a la venta');nav('pos');}
+function editClient(id){const c=clients.find(x=>x.id===id);
+  $('modal').innerHTML=`<div class="modal-hd">Editar cliente</div><div class="modal-bd">
+    <div class="field"><label>Nombre completo</label><input id="ecName" value="${c.name}"></div>
+    <div class="field"><label>Teléfono</label><input id="ecPhone" value="${c.phone}"></div>
+    <div class="field"><label>Dirección</label><input id="ecAddr" value="${c.addr}"></div>
+    <div class="field"><label>Tipo de receta</label><select id="ecRx"><option ${c.rx==='SAS'?'selected':''}>SAS</option><option ${c.rx==='MUFACE'?'selected':''}>MUFACE</option><option ${c.rx==='Privada'?'selected':''}>Privada</option><option ${c.rx==='Residencia'?'selected':''}>Residencia</option></select></div>
+    <div class="field"><label><input type="checkbox" id="ecPens" ${c.pensionista?'checked':''} style="width:auto;margin-right:6px">Pensionista (aportación reducida)</label></div>
+    </div><div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="saveEdit('${id}')">Guardar</button></div>`;showModal();}
+function saveEdit(id){const c=clients.find(x=>x.id===id);c.name=$('ecName').value.trim()||c.name;c.phone=$('ecPhone').value.trim();c.addr=$('ecAddr').value.trim();c.rx=$('ecRx').value;c.pensionista=$('ecPens').checked;closeModal();toast('✓ Ficha actualizada');openClientProfile(id);}
+function settleDebt(id){const c=clients.find(x=>x.id===id);const d=c.debt;c.debt=0;cashSales+=d;salesToday+=d;$('stSales').textContent=eur(salesToday);toast('✓ Deuda saldada · '+eur(d));openClientProfile(id);}
+
+/* ════════════ ALMACÉN ════════════ */
+function renderAlmacen(){
+  const low=meds.filter(m=>stockOf(m)<=m.min).length;
+  const soon=meds.filter(m=>m.lots.some(l=>isSoon(l.exp)||isExpired(l.exp))).length;
+  $('wbody').innerHTML=`
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi g"><div class="lbl">Referencias</div><div class="val">${meds.length}</div><div class="sub">artículos en catálogo</div></div>
+      <div class="kpi a"><div class="lbl">Stock bajo</div><div class="val">${low}</div><div class="sub">≤ stock mínimo</div></div>
+      <div class="kpi r"><div class="lbl">Caducidad próx./vencida</div><div class="val">${soon}</div><div class="sub">≤ 6 meses (hoy 06/2026)</div></div>
+      <div class="kpi b"><div class="lbl">Valor stock (PVP)</div><div class="val" style="font-size:20px">${eur(meds.reduce((s,m)=>s+m.pvp*stockOf(m),0))}</div><div class="sub">valoración total</div></div>
+    </div>
+    <div class="filters">
+      <input placeholder="Buscar artículo / CN / principio activo…" id="alF" oninput="renderAlTable()">
+      <select id="alCat" onchange="renderAlTable()"><option value="">Todas las categorías</option>${[...new Set(meds.map(m=>m.cat))].map(c=>`<option>${c}</option>`).join('')}</select>
+      <select id="alFlag" onchange="renderAlTable()"><option value="todos">Todos</option><option value="low">Solo stock bajo</option><option value="exp">Caducidad próxima</option><option value="rx">Solo con receta</option></select>
+    </div>
+    <div class="scrollbox"><table id="alTable"></table></div>`;
+  renderAlTable();
+}
+function renderAlTable(){
+  const q=($('alF')?.value||'').toLowerCase();const cat=$('alCat')?.value||'';const flag=$('alFlag')?.value||'todos';
+  let list=meds.filter(m=>(m.name.toLowerCase().includes(q)||m.cn.includes(q)||m.pa.toLowerCase().includes(q))&&(!cat||m.cat===cat));
+  if(flag==='low')list=list.filter(m=>stockOf(m)<=m.min);
+  if(flag==='exp')list=list.filter(m=>m.lots.some(l=>isSoon(l.exp)||isExpired(l.exp)));
+  if(flag==='rx')list=list.filter(m=>m.rx);
+  $('alTable').innerHTML=`<thead><tr><th>CN</th><th>Artículo</th><th>Lotes (lote · cad · uds)</th><th class="num">Stock</th><th class="num">Mín.</th><th class="num">PVP</th><th class="num">IVA</th><th>Estado</th></tr></thead>
+   <tbody>${list.map(m=>{const fl=medFlag(m);const flT={exp:'<span class="tag exp">Caducado</span>',low:'<span class="tag low">Reponer</span>',soon:'<span class="tag soon">Cad. próxima</span>',ok:'<span class="tag ok">OK</span>'}[fl];
+   return`<tr>
+     <td class="mono" style="color:var(--ink-dim)">${m.cn}</td>
+     <td><b>${m.name}</b> ${m.rx?'<span class="tag rx">℞</span>':''}<br><span style="font-size:10.5px;color:var(--ink-dim)">${m.pa} · ${m.loc}</span></td>
+     <td>${m.lots.length?m.lots.map(l=>`<div class="lot-row"><span style="${isExpired(l.exp)?'color:var(--red)':isSoon(l.exp)?'color:var(--amber)':''}">${l.lote} · ${l.exp}</span><span>${l.qty} u</span></div>`).join(''):'<span style="color:var(--ink-dim);font-size:11px">sin existencias</span>'}</td>
+     <td class="num" style="${stockOf(m)<=m.min?'color:var(--amber);font-weight:700':''}">${stockOf(m)}</td>
+     <td class="num" style="color:var(--ink-dim)">${m.min}</td><td class="num">${eur(m.pvp)}</td><td class="num" style="color:var(--ink-dim)">${m.iva}%</td><td>${flT}</td></tr>`;}).join('')}</tbody>`;
+}
+
+/* ════════════ PEDIDOS (con encargos) ════════════ */
+function renderPedidos(){
+  const prop=meds.filter(m=>stockOf(m)<=m.min).map(m=>({...m,_st:stockOf(m),order:Math.max(m.min*2-stockOf(m),m.min)}));
+  const encPend=encargos.filter(e=>!e.done);
+  $('wbody').innerHTML=`
+    ${encPend.length?`<div class="card" style="margin-bottom:14px;border-color:var(--amber)">
+      <b style="font-size:14px;color:var(--amber)">📋 Encargos de clientes (${encPend.length})</b>
+      <table style="margin-top:10px"><thead><tr><th>Ref.</th><th>Artículo</th><th>Cliente</th><th class="num">Uds</th><th>Fecha</th></tr></thead>
+      <tbody>${encPend.map(e=>`<tr><td class="mono">${e.id}</td><td><b>${e.name}</b></td><td>${e.client}</td><td class="num">${e.qty}</td><td class="mono">${e.date}</td></tr>`).join('')}</tbody></table>
+      <div style="font-size:11px;color:var(--ink-dim);margin-top:8px">Los encargos se incorporan automáticamente al pedido del proveedor.</div></div>`:''}
+    <div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Propuesta automática por stock mínimo y cobertura. Ajuste cantidades, elija proveedor y envíe el pedido electrónico.</div>
+    <div class="filters"><label style="font-size:12px;font-weight:600">Proveedor:</label><select id="provSel">${providers.map(p=>`<option value="${p.id}">${p.name} (${p.type})</option>`).join('')}</select><span style="margin-left:auto;font-size:12px;color:var(--ink-dim)">${prop.length} referencias propuestas</span></div>
+    <div class="scrollbox"><table><thead><tr><th>CN</th><th>Artículo</th><th class="num">Stock</th><th class="num">Mín.</th><th class="num">Pedir</th><th class="num">Coste est.</th></tr></thead>
+      <tbody id="ordBody">${prop.map(m=>`<tr><td class="mono" style="color:var(--ink-dim)">${m.cn}</td><td><b>${m.name}</b></td><td class="num" style="color:var(--amber);font-weight:700">${m._st}</td><td class="num" style="color:var(--ink-dim)">${m.min}</td><td class="num"><input type="number" value="${m.order}" min="0" style="width:64px;padding:4px 6px;text-align:right" class="mono ord-q" data-cn="${m.cn}" data-cost="${m.cost}" oninput="calcOrder()"></td><td class="num ord-line">${eur(m.order*m.cost)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-dim)">No hay artículos bajo mínimo. ¡Stock al día!</td></tr>'}</tbody></table></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><div style="font-size:16px;font-weight:700">Total pedido: <span class="mono" id="ordTotal" style="color:var(--green-d)">${eur(prop.reduce((s,m)=>s+m.order*m.cost,0))}</span></div><button class="btn pri" onclick="sendOrder()" ${prop.length||encPend.length?'':'disabled'}>📤 Enviar pedido electrónico</button></div>`;
+}
+function calcOrder(){let tot=0;document.querySelectorAll('.ord-q').forEach(i=>{const v=(+i.value||0)*(+i.dataset.cost);tot+=v;i.closest('tr').querySelector('.ord-line').textContent=eur(v);});$('ordTotal').textContent=eur(tot);}
+function sendOrder(){
+  const prov=providers.find(p=>p.id==$('provSel').value);
+  let lines=[...document.querySelectorAll('.ord-q')].filter(i=>+i.value>0).map(i=>({cn:i.dataset.cn,qty:+i.value}));
+  // incorporar encargos pendientes
+  encargos.filter(e=>!e.done).forEach(e=>{const ex=lines.find(l=>l.cn===e.cn);if(ex)ex.qty+=e.qty;else lines.push({cn:e.cn,qty:e.qty});e.ordered=true;});
+  if(!lines.length){toast('No hay líneas que enviar','err');return;}
+  pendingOrders.push({id:'PED'+(1000+pendingOrders.length),prov:prov.name,lines,date:new Date().toLocaleDateString('es-ES')});
+  updBadges();toast('✓ Pedido enviado a '+prov.name+' ('+lines.length+' líneas)');setTimeout(()=>nav('recepcion'),900);
+}
+
+/* ════════════ RECEPCIÓN (guarda lotes reales) ════════════ */
+function renderRecepcion(){
+  if(!pendingOrders.length){$('wbody').innerHTML=`<div class="card" style="text-align:center;padding:50px;color:var(--ink-dim)"><div style="font-size:40px;margin-bottom:10px">📦</div><b style="font-size:16px;color:var(--ink)">No hay pedidos pendientes de recibir</b><p style="margin-top:8px">Genere un pedido en <a onclick="nav('pedidos')" style="color:var(--green);cursor:pointer;font-weight:600">Pedidos</a> y aparecerá aquí.</p></div>`;return;}
+  $('wbody').innerHTML=`<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Coteje el albarán. El <b>lote y la caducidad</b> que registre aquí quedan trazados en el almacén y se consumen por orden de caducidad (FEFO).</div>
+    ${pendingOrders.map((o,oi)=>`<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><b style="font-size:14px">Albarán ${o.id} · ${o.prov}</b><span style="font-size:12px;color:var(--ink-dim)">${o.date} · ${o.lines.length} líneas</span></div>
+      <table><thead><tr><th>CN</th><th>Artículo</th><th class="num">Pedido</th><th class="num">Recibido</th><th>Lote</th><th>Caducidad (MM/AAAA)</th></tr></thead>
+        <tbody>${o.lines.map((l,li)=>{const m=meds.find(x=>x.cn===l.cn);return`<tr><td class="mono" style="color:var(--ink-dim)">${l.cn}</td><td><b>${m.name}</b></td><td class="num">${l.qty}</td>
+          <td class="num"><input type="number" value="${l.qty}" min="0" style="width:60px;padding:4px;text-align:right" class="mono rec-q-${oi}" data-cn="${l.cn}"></td>
+          <td><input value="L${Math.floor(Math.random()*9000+1000)}" style="width:80px;padding:4px" class="mono rec-lot-${oi}"></td>
+          <td><input value="${['03/2028','06/2028','09/2027','12/2027'][li%4]}" style="width:90px;padding:4px" class="mono rec-exp-${oi}"></td></tr>`;}).join('')}</tbody></table>
+      <div style="margin-top:12px;text-align:right"><button class="btn pri" onclick="confirmRec(${oi})">✓ Confirmar recepción y dar entrada a lotes</button></div></div>`).join('')}`;
+}
+function confirmRec(oi){
+  const o=pendingOrders[oi];const qs=document.querySelectorAll('.rec-q-'+oi),lots=document.querySelectorAll('.rec-lot-'+oi),exps=document.querySelectorAll('.rec-exp-'+oi);
+  qs.forEach((i,k)=>{const m=meds.find(x=>x.cn===i.dataset.cn);const qty=+i.value||0;if(qty>0)addLot(m,lots[k].value||'L0000',exps[k].value||'12/2027',qty);});
+  // marcar encargos satisfechos
+  o.lines.forEach(l=>{encargos.filter(e=>!e.done&&e.cn===l.cn).forEach(e=>{e.done=true;toast('📞 Avisar a '+e.client+': llegó su encargo ('+e.name+')');});});
+  pendingOrders.splice(oi,1);updBadges();toast('✓ Stock y lotes actualizados · '+o.id);renderRecepcion();
+}
+
+/* ════════════ RECETAS (conectado con dispensación) ════════════ */
+function renderRecetas(){
+  const blocks=[{...rxBlock,estado:'Abierto'},{id:'BL-2026-002',org:'MUFACE',recetas:38,importe:520.10,estado:'Abierto'},{id:'BL-2025-012',org:'SAS (electrónica)',recetas:160,importe:2105.80,estado:'Liquidado'}];
+  $('wbody').innerHTML=`<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Cada receta cotejada en el mostrador se añade automáticamente al bloque abierto (${rxBlock.id}). Al cierre de mes se factura y liquida al organismo.</div>
+    <div class="kpis" style="margin-bottom:16px;grid-template-columns:repeat(3,1fr)">
+      <div class="kpi g"><div class="lbl">Recetas en bloque abierto</div><div class="val">${rxBlock.recetas}</div><div class="sub">${rxBlock.id}</div></div>
+      <div class="kpi b"><div class="lbl">Importe a liquidar</div><div class="val" style="font-size:22px">${eur(rxBlock.importe)}</div><div class="sub">bloque abierto</div></div>
+      <div class="kpi a"><div class="lbl">Dispensadas hoy aquí</div><div class="val">${rxDispensedToday.length}</div><div class="sub">en esta sesión</div></div>
+    </div>
+    ${rxDispensedToday.length?`<div class="card" style="margin-bottom:14px"><b style="font-size:13px">Recetas dispensadas en esta sesión</b><table style="margin-top:8px"><thead><tr><th>Hora</th><th>Medicamento</th><th>Paciente</th></tr></thead><tbody>${rxDispensedToday.slice().reverse().map(r=>`<tr><td class="mono">${r.time}</td><td><b>${r.name}</b></td><td>${r.client}</td></tr>`).join('')}</tbody></table></div>`:''}
+    <div class="scrollbox"><table><thead><tr><th>Bloque</th><th>Organismo</th><th class="num">Recetas</th><th class="num">Importe</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${blocks.map(b=>`<tr><td class="mono"><b>${b.id}</b></td><td>${b.org}</td><td class="num">${b.recetas}</td><td class="num"><b>${eur(b.importe)}</b></td><td>${b.estado==='Abierto'?'<span class="tag ok">Abierto</span>':'<span class="tag iva">Liquidado</span>'}</td><td>${b.estado==='Abierto'?`<button class="btn" style="padding:5px 10px" onclick="liquidar('${b.id}')">Liquidar ▸</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function liquidar(id){
+  $('modal').innerHTML=`<div class="modal-hd">Liquidar bloque ${id}</div><div class="modal-bd"><div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Se generará el fichero de facturación para el organismo y se cerrará el bloque. ${id===rxBlock.id?'Importe: <b>'+eur(rxBlock.importe)+'</b> · '+rxBlock.recetas+' recetas.':''}</div><p style="font-size:12px;color:var(--ink-soft)">En la práctica real se exporta el soporte electrónico y se concilia con el Colegio Oficial de Farmacéuticos.</p></div><div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="doLiquidar('${id}')">Confirmar liquidación</button></div>`;showModal();
+}
+function doLiquidar(id){if(id===rxBlock.id){rxBlock={id:'BL-2026-003',org:'SAS (electrónica)',recetas:0,importe:0};rxDispensedToday=[];}closeModal();toast('✓ Bloque '+id+' liquidado · nuevo bloque abierto');renderRecetas();}
+
+/* ════════════ CAJA (con devoluciones) ════════════ */
+function renderCaja(){
+  $('wbody').innerHTML=`<div class="grid2">
+    <div class="card"><h3 style="font-size:15px;margin-bottom:14px">Arqueo de caja — Turno actual</h3>
+      <div class="tline" style="font-size:14px;padding:8px 0;border-bottom:1px solid var(--line-soft)"><span>💵 Ventas en efectivo</span><span class="mono"><b>${eur(cashSales)}</b></span></div>
+      <div class="tline" style="font-size:14px;padding:8px 0;border-bottom:1px solid var(--line-soft)"><span>💳 Ventas con tarjeta</span><span class="mono"><b>${eur(cardSales)}</b></span></div>
+      <div class="tline" style="font-size:14px;padding:8px 0;border-bottom:1px solid var(--line-soft)"><span>Nº de tickets</span><span class="mono"><b>${ticketsToday}</b></span></div>
+      <div class="tline total" style="font-size:22px;border-top:2px solid var(--line);padding-top:12px;margin-top:8px"><span>TOTAL CAJA</span><span>${eur(salesToday)}</span></div>
+      <div style="margin-top:18px"><div class="field"><label>Efectivo contado en cajón</label><input class="mono" type="number" step="0.01" id="counted" value="${cashSales.toFixed(2)}" oninput="cuadre()"></div>
+        <div id="cuadreOut" style="font-family:'JetBrains Mono';font-weight:700;padding:8px 0"></div>
+        <button class="btn pri" style="width:100%;margin-top:8px" onclick="toast('Cierre de caja realizado · '+ticketsToday+' tickets')">🔒 Cerrar caja del turno</button></div></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:14px">Últimas ventas <span style="font-weight:400;font-size:12px;color:var(--ink-dim)">— puede devolver una venta</span></h3>
+      <div style="max-height:380px;overflow-y:auto">${salesLog.length?`<table><thead><tr><th>Hora</th><th>Cliente</th><th>Pago</th><th class="num">Total</th><th></th></tr></thead>
+        <tbody>${salesLog.slice().reverse().map(s=>`<tr style="${s.cancelled?'opacity:.5':''}"><td class="mono">${s.time}</td><td>${s.client}</td><td>${s.pay==='efectivo'?'💵':'💳'}</td><td class="num"><b>${eur(s.total)}</b></td><td>${s.cancelled?'<span class="tag" style="background:var(--red-bg);color:var(--red)">Devuelta</span>':`<button class="btn danger" style="padding:4px 9px;font-size:11px" onclick="devolver('${s.id}')">Devolver</button>`}</td></tr>`).join('')}</tbody></table>`:'<div style="text-align:center;color:var(--ink-dim);padding:40px">Aún no hay ventas en este turno.<br>Realice ventas en <a onclick="nav(\'pos\')" style="color:var(--green);cursor:pointer;font-weight:600">Dispensación</a>.</div>'}</div></div></div>`;
+  cuadre();
+}
+function devolver(id){const s=salesLog.find(x=>x.id===id);if(!s||s.cancelled)return;
+  $('modal').innerHTML=`<div class="modal-hd amber">Devolución de venta ${id}</div><div class="modal-bd"><div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Se reintegrará <b>${eur(s.total)}</b> (${s.pay}) y los artículos volverán al stock.</div><p style="font-size:12px;color:var(--ink-soft)">Las devoluciones quedan registradas para el arqueo.</p></div><div class="modal-ft"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn danger" onclick="doDevolver('${id}')">Confirmar devolución</button></div>`;showModal();
+}
+function doDevolver(id){const s=salesLog.find(x=>x.id===id);s.cancelled=true;
+  s.lines.forEach(l=>{const m=meds.find(x=>x.cn===l.cn);if(m)addLot(m,'DEV','12/2027',l.qty);});
+  if(s.pay==='efectivo')cashSales-=s.total;else cardSales-=s.total;
+  salesToday-=s.total;ticketsToday=Math.max(0,ticketsToday-1);
+  if(s.financed>0){rxBlock.importe=Math.max(0,rxBlock.importe-s.financed);} // revertir parte financiada del bloque
+  $('stSales').textContent=eur(salesToday);$('stTickets').textContent=ticketsToday;
+  closeModal();toast('✓ Venta devuelta · '+eur(s.total));renderCaja();
+}
+function cuadre(){const c=parseFloat($('counted')?.value||0);const dif=c-cashSales;const o=$('cuadreOut');if(!o)return;if(Math.abs(dif)<0.005){o.textContent='✓ Caja cuadrada';o.style.color='var(--green-d)';}else{o.textContent=(dif>0?'Sobra ':'Falta ')+eur(Math.abs(dif));o.style.color=dif>0?'var(--amber)':'var(--red)';}}
+
+/* ════════════ INFORMES ════════════ */
+function renderInformes(){
+  const byCat={};meds.forEach(m=>{byCat[m.cat]=(byCat[m.cat]||0)+stockOf(m)*m.pvp;});
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const maxV=Math.max(...cats.map(c=>c[1]),1);
+  $('wbody').innerHTML=`<div class="kpis" style="margin-bottom:16px">
+    <div class="kpi g"><div class="lbl">Ventas hoy</div><div class="val" style="font-size:22px">${eur(salesToday)}</div><div class="sub">${ticketsToday} tickets</div></div>
+    <div class="kpi b"><div class="lbl">Ticket medio</div><div class="val" style="font-size:22px">${eur(ticketsToday?salesToday/ticketsToday:0)}</div><div class="sub">por operación</div></div>
+    <div class="kpi a"><div class="lbl">% Efectivo</div><div class="val">${salesToday>0?Math.round(cashSales/salesToday*100):0}%</div><div class="sub">vs tarjeta</div></div>
+    <div class="kpi r"><div class="lbl">Reposición pend.</div><div class="val">${meds.filter(m=>stockOf(m)<=m.min).length}</div><div class="sub">referencias bajo mínimo</div></div></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:16px">Valor de stock por categoría (PVP)</h3>
+      ${cats.map(([c,v])=>`<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="font-weight:600">${c}</span><span class="mono">${eur(v)}</span></div><div style="height:9px;background:var(--line-soft);border-radius:99px;overflow:hidden"><div style="height:100%;width:${v/maxV*100}%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:99px"></div></div></div>`).join('')}</div>`;
+}
+
+/* ════════════ MODO GUIADO ════════════ */
+let guideDone=[];
+function toggleGuide(){guided=!guided;if(guided)initGuide();renderCtx();renderPOS();}
+function initGuide(){
+  guideSteps=[
+    {t:'Asignar a la paciente María García López',cond:()=>curClient&&curClient.id==='C001'},
+    {t:'Añadir la receta de Omeprazol al ticket',cond:()=>ticket.some(t=>t.pa==='Omeprazol')},
+    {t:'Añadir un Ibuprofeno de venta libre',cond:()=>ticket.some(t=>t.pa==='Ibuprofeno'&&!t.rx)},
+    {t:'Cobrar cotejando la receta con la tarjeta sanitaria',cond:()=>false},
+  ];
+  guideDone=[false,false,false,false];
+}
+function renderGuide(){const b=$('guideBody');if(!b)return;
+  // Latch: una vez cumplido un paso, permanece completado
+  guideSteps.forEach((s,i)=>{if(s.cond())guideDone[i]=true;});
+  const curIdx=guideDone.findIndex(d=>!d);
+  b.innerHTML=`<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px">La paciente <b>María García</b> trae una <b>receta electrónica de Omeprazol</b> y pide además un <b>ibuprofeno sin receta</b>. Complete el flujo:</div>`+
+   guideSteps.map((s,i)=>`<div class="gstep ${guideDone[i]?'done':i===curIdx?'cur':''}"><div class="chk">${guideDone[i]?'✓':i+1}</div><div>${s.t}</div></div>`).join('')+
+   (guideDone.every(d=>d)?'<div style="margin-top:10px;padding:10px;background:var(--green-pale);border-radius:8px;color:var(--green-d);font-weight:600;font-size:12px;text-align:center">🎉 ¡Caso completado correctamente!</div><button class="btn" style="width:100%;margin-top:8px" onclick="initGuide();renderGuide()">Reiniciar caso</button>':'');
+}
+function checkGuide(){if(curModule==='pos'&&guided)renderGuide();}
+function guideMarkSale(){if(guided){guideDone[3]=true;}}
+
+/* ── MODAL ── */
+function showModal(){$('modalOv').classList.add('show');}
+function closeModal(){$('modalOv').classList.remove('show');}
+$('modalOv').addEventListener('click',e=>{if(e.target===$('modalOv'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='F2'){e.preventDefault();nav('pos');}if(e.key==='F4'){e.preventDefault();nav('almacen');}if(e.key==='F7'){e.preventDefault();nav('caja');}if(e.key==='Escape')closeModal();});
+
+nav('pos');
+</script>
+</body>
+</html>
