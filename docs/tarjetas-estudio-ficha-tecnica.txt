@@ -1,0 +1,153 @@
+FICHA TÉCNICA DEL PROYECTO
+
+Nombre del proyecto:
+Tarjetas de Estudio IA — Recurso interactivo para formación digital
+
+Tipo de proyecto:
+Recurso formativo interactivo / Interactive learning resource
+
+Descripción breve:
+Tarjetas de Estudio IA es una aplicación web interactiva de repaso activo basada en tarjetas de pregunta y respuesta. El proyecto está orientado al aprendizaje de conceptos relacionados con la inteligencia artificial aplicada a la formación digital, mediante sesiones breves, navegación por temas, modo aleatorio, seguimiento del progreso y evaluación final del dominio alcanzado.
+
+Objetivo del proyecto:
+El objetivo principal es transformar un temario teórico sobre inteligencia artificial aplicada a la formación en una experiencia de estudio más práctica, visual y autónoma. El recurso permite que el usuario repase conceptos clave, valore su nivel de seguridad en cada respuesta y reciba una estimación final de su dominio del contenido.
+
+Contexto de uso:
+El proyecto está pensado para formación digital, autoaprendizaje, refuerzo de contenidos, preparación de sesiones formativas o acompañamiento de cursos sobre inteligencia artificial generativa, prompting, automatización y creación de materiales educativos. Puede utilizarse como complemento de un curso, como recurso de repaso o como plantilla reutilizable para otros temarios.
+
+Estructura del contenido:
+El recurso contiene 100 tarjetas organizadas en 5 bloques temáticos:
+
+1. Fundamentos de inteligencia artificial
+2. Prompting y dirección de IA
+3. Creación de contenidos formativos con IA
+4. Automatización de flujos con IA
+5. Ética, calidad y uso responsable de IA
+
+Cada tema contiene tarjetas con:
+
+* Pregunta
+* Respuesta
+* Explicación complementaria
+
+Funcionalidades principales:
+
+1. Selección por temas:
+
+* El usuario puede elegir un bloque concreto de contenido.
+* Cada tema está organizado desde el menú lateral.
+* La interfaz muestra el progreso de estudio dentro del tema seleccionado.
+
+2. Modo aleatorio:
+
+* Permite mezclar tarjetas de distintos temas.
+* Facilita el repaso global del contenido.
+* Evita que el aprendizaje dependa siempre del mismo orden.
+
+3. Sesiones de estudio:
+
+* Cada sesión presenta una selección de tarjetas.
+* El recurso está diseñado para sesiones breves y manejables.
+* El sistema permite avanzar de forma progresiva sin saturar al usuario.
+
+4. Tarjetas de pregunta y respuesta:
+
+* La pregunta aparece centrada visualmente en la tarjeta.
+* El usuario puede pensar la respuesta antes de revelarla.
+* La respuesta incluye una explicación adicional para reforzar el aprendizaje.
+
+5. Autoevaluación:
+
+* El usuario puede marcar cada tarjeta como:
+
+  * No lo sé
+  * Dudo
+  * Lo sé
+* Esta clasificación permite medir el nivel real de dominio del contenido.
+
+6. Resultados finales:
+
+* Al completar una sesión, el sistema muestra un resumen de desempeño.
+* Solo las tarjetas marcadas como “Lo sé” cuentan como dominadas.
+* El resultado final ayuda al usuario a identificar qué temas necesita reforzar.
+
+7. Progreso visual:
+
+* La aplicación incluye indicadores visuales de avance.
+* El usuario puede ver cuántas tarjetas ha completado.
+* Los estados de las tarjetas se representan mediante colores y marcadores visuales.
+
+8. Diseño responsive:
+
+* La interfaz está adaptada a escritorio y dispositivos móviles.
+* El menú lateral se transforma para funcionar correctamente en pantallas pequeñas.
+* El diseño mantiene legibilidad y usabilidad en diferentes tamaños de pantalla.
+
+9. Experiencia de usuario:
+
+* Interfaz limpia, educativa y visualmente agradable.
+* Paleta verde asociada a formación, calma y progreso.
+* Tipografías elegantes y buena jerarquía visual.
+* Controles claros para avanzar, responder y revisar.
+
+Tecnologías utilizadas:
+
+* HTML5
+* CSS3
+* JavaScript vanilla
+* Diseño responsive
+* Datos estructurados en JavaScript
+* Interfaz de tarjetas
+* Lógica de progreso y evaluación
+* Uso de tipografías externas de Google Fonts
+
+Características técnicas:
+
+* Proyecto autocontenido en un único archivo HTML.
+* No requiere backend ni base de datos.
+* No requiere instalación.
+* Puede ejecutarse directamente desde navegador.
+* El contenido está integrado en el propio archivo.
+* La lógica de navegación, selección de tarjetas, progreso y resultados está desarrollada en JavaScript.
+* La interfaz utiliza CSS personalizado sin frameworks externos.
+* El recurso puede adaptarse a otros temarios sustituyendo el banco de tarjetas.
+
+Competencias demostradas:
+
+* Diseño de recursos formativos digitales.
+* Desarrollo de herramientas educativas interactivas.
+* Conversión de temario teórico en experiencia práctica de aprendizaje.
+* Programación en HTML, CSS y JavaScript.
+* Diseño de interfaz orientada al aprendizaje.
+* Organización de contenidos por bloques temáticos.
+* Creación de sistemas de autoevaluación.
+* Diseño responsive.
+* Aplicación de IA generativa a la creación de materiales formativos.
+* Desarrollo de plantillas reutilizables para formación digital.
+
+Valor añadido del proyecto:
+Este proyecto demuestra la capacidad de convertir contenidos formativos en una herramienta interactiva funcional y reutilizable. No se limita a mostrar información, sino que crea una dinámica de estudio basada en memoria activa, autoevaluación y seguimiento del progreso. Además, su estructura permite adaptar fácilmente la plantilla a otros cursos, materias o programas de formación.
+
+Rol desempeñado:
+Diseño conceptual, estructura del temario, creación de tarjetas, diseño visual, desarrollo de la interfaz, programación de la lógica interactiva, adaptación responsive y preparación del recurso para su publicación como demo de portfolio.
+
+Estado del proyecto:
+Demo funcional preparada para portfolio profesional.
+
+Versión:
+Versión con 100 tarjetas y pregunta centrada en la tarjeta.
+
+Posibles mejoras futuras:
+
+* Añadir guardado de progreso con localStorage.
+* Incorporar estadísticas persistentes por usuario.
+* Añadir exportación de resultados.
+* Crear un modo examen.
+* Añadir temporizador opcional.
+* Permitir importar tarjetas desde un archivo externo.
+* Separar el proyecto en archivos HTML, CSS y JavaScript.
+* Crear una versión editable para docentes.
+* Añadir más bancos de tarjetas por nivel o especialidad.
+
+Uso en portfolio:
+Este proyecto se presenta como ejemplo de recurso formativo interactivo, plantilla de estudio digital y herramienta de autoevaluación creada con HTML, CSS y JavaScript. Refuerza el perfil profesional orientado a IA aplicada a formación digital, automatización de materiales educativos y desarrollo de recursos interactivos.
