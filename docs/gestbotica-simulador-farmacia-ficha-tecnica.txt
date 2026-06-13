@@ -1,0 +1,139 @@
+FICHA TÉCNICA DEL PROYECTO
+
+Nombre del proyecto:
+GestBotica — Simulador de Gestión Farmacéutica
+
+Tipo de proyecto:
+Simulador formativo interactivo / Interactive training simulator
+
+Descripción breve:
+GestBotica es un simulador web interactivo diseñado para recrear el funcionamiento básico de una aplicación de gestión farmacéutica en un entorno formativo. El proyecto permite practicar procesos habituales de una farmacia, como la dispensación de productos, la asignación de clientes, la gestión de stock, el control de lotes y caducidades, la creación de pedidos, la recepción de mercancía, la gestión de recetas, el arqueo de caja y la consulta de informes.
+
+Objetivo del proyecto:
+El objetivo principal del proyecto es crear una herramienta educativa que permita al alumnado practicar flujos de trabajo propios de una farmacia mediante una interfaz visual, guiada y realista. La demo está pensada como recurso de apoyo para formación profesional, cursos internos o simulaciones de aula.
+
+Contexto de uso:
+El simulador puede utilizarse en entornos formativos relacionados con farmacia, administración sanitaria, gestión comercial, atención al cliente o digitalización de procesos. Su diseño permite que el usuario interactúe con distintas áreas de una farmacia simulada sin necesidad de acceder a software real ni a datos sensibles.
+
+Funcionalidades principales:
+
+1. Módulo de dispensación:
+
+* Buscador de productos por nombre, código nacional, laboratorio, categoría o principio activo.
+* Añadido de productos al ticket de venta.
+* Diferenciación entre productos de venta libre y productos con receta.
+* Cálculo automático de importes, IVA y total del ticket.
+* Gestión de cantidades y eliminación de líneas de venta.
+
+2. Módulo de clientes:
+
+* Selección de cliente para la venta.
+* Fichas de cliente con datos simulados.
+* Sistema de puntos e historial básico.
+* Asociación del cliente al proceso de dispensación.
+
+3. Módulo de receta electrónica:
+
+* Simulación de cotejo de receta electrónica.
+* Lectura simulada de tarjeta sanitaria.
+* Validación de medicamentos con receta.
+* Cálculo de aportación del paciente y parte financiada.
+* Registro de recetas dispensadas.
+
+4. Módulo de almacén:
+
+* Visualización de productos disponibles.
+* Control de stock.
+* Gestión de lotes.
+* Identificación de caducidades.
+* Alertas de stock bajo o productos próximos a caducar.
+
+5. Módulo de pedidos:
+
+* Generación de propuestas de reposición.
+* Gestión de encargos pendientes.
+* Creación de pedidos a proveedores simulados.
+
+6. Módulo de recepción:
+
+* Recepción de mercancía.
+* Entrada de nuevos lotes.
+* Actualización de stock tras la recepción.
+
+7. Módulo de caja:
+
+* Registro de ventas.
+* Diferenciación entre pagos en efectivo y tarjeta.
+* Cálculo de cambio.
+* Arqueo y cierre de caja.
+* Gestión básica de devoluciones.
+
+8. Módulo de informes:
+
+* Resumen de actividad.
+* Indicadores de ventas.
+* Control de tickets.
+* Visualización de datos de gestión.
+
+9. Modo guiado:
+
+* Flujo de aprendizaje paso a paso.
+* Orientación para realizar una venta completa.
+* Enfoque didáctico para uso en aula.
+
+Tecnologías utilizadas:
+
+* HTML5
+* CSS3
+* JavaScript vanilla
+* Datos simulados en objeto JavaScript
+* Diseño responsive adaptado a entorno de escritorio
+* Interfaz tipo aplicación profesional
+* Lógica de simulación integrada en una única demo web
+
+Características técnicas:
+
+* Proyecto autocontenido en un único archivo HTML.
+* No requiere backend ni base de datos externa.
+* No requiere instalación.
+* Puede ejecutarse directamente desde navegador.
+* La lógica de negocio está simulada mediante JavaScript.
+* Los datos de medicamentos, clientes, proveedores, lotes y ventas son ficticios o de demostración.
+* Interfaz estructurada por módulos mediante navegación lateral.
+* Uso de modales, tablas dinámicas, tickets, alertas visuales y cálculos automáticos.
+
+Competencias demostradas:
+
+* Diseño de recursos formativos digitales.
+* Desarrollo de simuladores interactivos.
+* Creación de interfaces tipo software empresarial.
+* Programación en JavaScript vanilla.
+* Estructuración de flujos de trabajo complejos.
+* Simulación de procesos profesionales.
+* Diseño de experiencia de usuario aplicada a formación.
+* Organización de información en módulos funcionales.
+* Creación de herramientas educativas reutilizables.
+* Aplicación de IA y automatización en el diseño de materiales formativos.
+
+Valor añadido del proyecto:
+GestBotica no es una simple maqueta visual, sino una demo funcional que simula procesos reales de gestión farmacéutica. El proyecto destaca por combinar diseño de interfaz, lógica de negocio, datos simulados y enfoque formativo. Permite mostrar cómo una herramienta digital puede convertir un contenido técnico o procedimental en una experiencia práctica e interactiva para el alumnado.
+
+Rol desempeñado:
+Diseño conceptual, estructura funcional, desarrollo de interfaz, programación de la lógica interactiva, creación de datos simulados, diseño de experiencia formativa y preparación del recurso para uso como demo de portfolio.
+
+Estado del proyecto:
+Demo funcional preparada para portfolio profesional.
+
+Posibles mejoras futuras:
+
+* Separar el proyecto en archivos independientes HTML, CSS y JavaScript.
+* Añadir persistencia de datos mediante localStorage.
+* Incorporar más casos prácticos guiados.
+* Añadir evaluación final del alumnado.
+* Exportar informes o tickets en PDF.
+* Adaptar la interfaz a tablets.
+* Incorporar roles de usuario.
+* Añadir panel docente para revisar resultados.
+
+Uso en portfolio:
+Este proyecto se presenta como ejemplo de desarrollo de simuladores formativos interactivos, creación de recursos digitales aplicados a formación profesional y diseño de herramientas educativas con lógica de negocio simulada.
