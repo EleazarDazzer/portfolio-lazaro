@@ -1,0 +1,2888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>El Alquimista de Vitriol — Novela Visual de Química</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pergamino:#293a48;          /* azul pizarra más claro y vivo (lienzo) */
+  --pergamino-claro:#354a5b;
+  --tinta:#f8fcfd;              /* texto casi blanco */
+  --tinta-tenue:#b0c8d4;
+  --oro:#f6d070;                /* oro más luminoso (acento) */
+  --oro-claro:#ffefb0;
+  --vitriolo:#7cf8c4;           /* verde vitriolo más brillante */
+  --vitriolo-osc:#2da078;
+  --sangre:#ff7a5c;            /* coral-rojo más vivo */
+  --cobre:#6cc8ec;             /* cian cobre más brillante */
+  --sombra:rgba(0,0,0,.35);
+  --borde:rgba(246,208,112,.55);
+  --panel:rgba(46,66,84,.92);
+  --acento2:#a98cff;           /* violeta arcano más vivo */
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0a0703;font-family:'EB Garamond',serif;color:var(--tinta)}
+#app{position:fixed;inset:0;display:block}
+
+/* ---- Marco de juego (ocupa toda la ventana) ---- */
+#marco{
+  position:relative;width:100%;height:100%;
+  background:
+    radial-gradient(ellipse at 50% -6%, rgba(109,240,184,.14), transparent 52%),
+    radial-gradient(ellipse at 50% 112%, rgba(240,200,96,.16), transparent 52%),
+    radial-gradient(ellipse at 12% 38%, rgba(154,124,255,.10), transparent 48%),
+    linear-gradient(155deg,#2b3d4d 0%,#22323f 55%,#1a2733 100%);
+  overflow:hidden;display:flex;flex-direction:column;
+}
+
+/* textura de pergamino sutil */
+#marco::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+
+/* ===================== FONDO ANIMADO ===================== */
+#fondo{position:absolute;inset:0;z-index:0;overflow:hidden}
+#fondo-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .25s linear;z-index:0}
+#fondo-video.activo{opacity:.82}
+#fondo canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.escena-tinte{position:absolute;inset:0;transition:background 1.2s ease;z-index:2}
+
+/* ═════════════ HUD estilo Hollow Knight (mínimo) ═════════════ */
+/* Esencia: redomas alquímicas en la esquina superior derecha */
+#hud{position:absolute;top:0;left:0;right:0;z-index:8;pointer-events:none;padding:18px 24px}
+#hud.oculto{display:none}
+#esencia-hud{position:absolute;top:18px;right:24px;display:flex;align-items:center}
+#redomas{display:flex;gap:9px}
+.redoma{position:relative;display:inline-block;transition:opacity .5s}
+.redoma svg{display:block;overflow:visible;width:30px;height:40px}
+.redoma .vidrio{fill:none;stroke:#cda857;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 6px rgba(205,168,87,.6))}
+.redoma .esencia{fill:#f7dd92;filter:drop-shadow(0 0 9px rgba(244,216,134,1));transition:opacity .4s,transform .4s;transform-origin:center}
+.redoma .esencia.burbuja{animation:burb 2.4s ease-in-out infinite}
+.redoma .vapor{stroke:#f7dd92;stroke-width:1.5;fill:none;opacity:.6;stroke-linecap:round;animation:vaporSube 3s ease-in-out infinite}
+.redoma.vacia .vidrio{stroke:#5b5340;filter:none;opacity:.55}
+.redoma.vacia .esencia{opacity:0;transform:scale(.2)}
+.redoma.vacia .vapor{opacity:0}
+@keyframes burb{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.5px) scale(1.08)}}
+@keyframes vaporSube{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:.7;transform:translateY(-2px)}}
+.redoma.rompiendo{animation:romperRedoma .6s ease forwards}
+@keyframes romperRedoma{0%{transform:translateY(0) rotate(0)}30%{transform:translateY(-3px) rotate(-7deg)}100%{transform:translateY(5px) rotate(5deg)}}
+
+/* iconos discretos — esquina inferior izquierda */
+#estados{position:absolute;left:0;bottom:0;z-index:8;padding:18px 24px}
+#estados.oculto{display:none}
+#iconos-juego{display:flex;gap:10px;align-items:center}
+.ico-btn{pointer-events:auto;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:none;cursor:pointer;padding:0;opacity:.55;transition:opacity .25s,transform .2s}
+.ico-btn svg{width:22px;height:22px;fill:none;stroke:#cda857;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ico-btn:hover{opacity:1;transform:translateY(-2px)}
+.ico-btn:hover svg{filter:drop-shadow(0 0 8px rgba(205,168,87,.7))}
+.ico-btn.silenciado svg .snd-on{display:none}
+.ico-btn.silenciado svg{stroke:#7a6a4a;opacity:.7}
+
+/* transición de acto — pantalla completa, estilo Hollow Knight */
+#transicion{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,#12100a,#050403 80%);
+  opacity:0;pointer-events:none;transition:opacity .25s ease}
+#transicion.visible{opacity:1;pointer-events:all;transition:opacity .12s ease}
+#trans-inner{text-align:center;opacity:0;transform:translateY(16px);
+  transition:opacity .9s ease,transform .9s ease}
+#transicion.visible #trans-inner{opacity:1;transform:translateY(0)}
+#trans-sigilo{width:clamp(60px,9vw,96px);margin:0 auto 22px;opacity:.9}
+#trans-sigilo svg{width:100%;height:auto;filter:drop-shadow(0 0 18px rgba(205,168,87,.55));
+  animation:transGirar 18s linear infinite}
+@keyframes transGirar{to{transform:rotate(360deg)}}
+#trans-titulo{font-family:'Cinzel',serif;font-weight:600;color:#f3e4c0;
+  font-size:clamp(26px,5vw,52px);letter-spacing:.16em;text-transform:uppercase;
+  text-shadow:0 0 32px rgba(220,180,90,.45)}
+#trans-sub{font-family:'Cinzel',serif;font-weight:500;color:#cdbf98;margin-top:14px;
+  font-size:clamp(13px,2vw,18px);letter-spacing:.2em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:14px}
+.trans-linea{display:inline-block;width:clamp(30px,8vw,70px);height:1px;
+  background:linear-gradient(90deg,transparent,rgba(205,168,87,.7),transparent)}
+
+/* elementos ocultos que conservan compatibilidad con el JS de estado */
+#b-sospecha,#b-sienna,#pistas-lista,#barra-sienna-wrap{display:none}
+
+/* panel del cuaderno de pistas */
+#pistas-panel{background:radial-gradient(ellipse at center,rgba(28,42,54,.98),rgba(11,17,23,.99))}
+#pistas-sub{color:var(--tinta-tenue);margin-bottom:22px;font-style:italic;font-size:14px}
+#lista-pistas{display:flex;flex-direction:column;gap:11px;width:100%;max-width:540px;max-height:60%;overflow-y:auto;padding-right:6px}
+.pista-card{display:flex;gap:14px;align-items:center;text-align:left;
+  background:linear-gradient(180deg,rgba(34,50,64,.9),rgba(24,36,47,.92));
+  border:1px solid var(--borde);border-left:3px solid var(--vitriolo);border-radius:6px;padding:13px 15px;animation:fadeIn .4s}
+.pista-card .pc-ico{font-size:30px;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(143,207,90,.4))}
+.pista-card .pc-txt{font-size:16px;color:var(--tinta);line-height:1.4}
+#pistas-vacio{color:var(--tinta-tenue);font-style:italic;font-size:16px;padding:30px}
+
+/* grimorio (codex de química) */
+#grimorio-panel{background:radial-gradient(ellipse at center,rgba(28,42,54,.98),rgba(11,17,23,.99))}
+#grimorio-sub,#galeria-sub{color:var(--tinta-tenue);margin-bottom:20px;font-style:italic;font-size:14px;max-width:560px}
+#lista-grimorio{display:flex;flex-direction:column;gap:10px;width:100%;max-width:600px;max-height:64%;overflow-y:auto;padding-right:6px;text-align:left}
+.codex-card{background:linear-gradient(180deg,rgba(34,50,64,.9),rgba(24,36,47,.92));
+  border:1px solid var(--borde);border-left:3px solid var(--vitriolo);border-radius:6px;padding:13px 16px;transition:.2s}
+.codex-card.nuevo{border-left-color:var(--tinta-tenue);opacity:.62}
+.codex-head{display:flex;align-items:center;gap:11px;cursor:pointer}
+.codex-head .cx-ico{font-size:24px}
+.codex-head b{font-family:'Cinzel',serif;color:var(--oro-claro);font-size:15px;flex:1}
+.codex-head .cx-estado{font-size:10px;font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:10px;border:1px solid}
+.cx-estado.est{color:var(--vitriolo);border-color:var(--vitriolo)}
+.cx-estado.pend{color:var(--tinta-tenue);border-color:var(--tinta-tenue)}
+.codex-body{font-size:15.5px;line-height:1.5;color:var(--tinta);margin-top:10px;
+  max-height:0;overflow:hidden;transition:max-height .35s ease,margin .35s ease;margin-top:0}
+.codex-card.abierto .codex-body{max-height:320px;margin-top:10px}
+.codex-head .cx-fl{color:var(--oro);transition:transform .3s;font-size:12px}
+.codex-card.abierto .cx-fl{transform:rotate(90deg)}
+
+/* galería de finales */
+#galeria-panel{background:radial-gradient(ellipse at center,rgba(28,42,54,.98),rgba(11,17,23,.99))}
+#lista-galeria{display:grid;grid-template-columns:1fr;gap:11px;width:100%;max-width:600px;max-height:62%;overflow-y:auto;padding-right:6px}
+@media(min-width:640px){#lista-galeria{grid-template-columns:1fr 1fr}}
+.final-card{display:flex;gap:13px;align-items:flex-start;text-align:left;
+  background:linear-gradient(180deg,rgba(34,50,64,.9),rgba(24,36,47,.92));
+  border:1px solid var(--borde);border-radius:6px;padding:13px 15px;transition:.2s}
+.final-card.bloq{opacity:.4;filter:grayscale(.7)}
+.final-card.visto{border-color:rgba(95,214,164,.45);box-shadow:0 0 14px rgba(95,214,164,.15)}
+.final-card .fc-ico{font-size:30px;flex-shrink:0}
+.final-card .fc-txt b{font-family:'Cinzel',serif;color:var(--oro-claro);font-size:14px;display:block}
+.final-card .fc-txt small{color:var(--tinta-tenue);font-size:12.5px;line-height:1.35}
+
+/* expediente en pantalla final */
+#expediente{width:100%;max-width:920px;margin:4px 0 18px;text-align:left;
+  max-height:38%;overflow-y:auto;padding-right:6px}
+.exp-titulo{font-family:'Cinzel',serif;color:var(--oro);font-size:13px;text-transform:uppercase;
+  letter-spacing:.12em;margin-bottom:14px;text-align:center}
+#exp-lista{display:grid;grid-template-columns:1fr 1fr;gap:6px 36px}
+.exp-row{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.exp-row .ex-ico{font-size:20px;width:26px;text-align:center;flex-shrink:0}
+.exp-row .ex-nom{font-size:15px;color:var(--tinta);flex:1;min-width:120px}
+.exp-bar{width:90px;height:10px;background:rgba(0,0,0,.4);border:1px solid var(--borde);border-radius:5px;overflow:hidden;flex-shrink:0}
+.exp-bar i{display:block;height:100%;border-radius:5px}
+.exp-bar i.dom{background:linear-gradient(90deg,var(--vitriolo-osc),var(--vitriolo))}
+.exp-bar i.med{background:linear-gradient(90deg,#a08820,var(--oro))}
+.exp-bar i.baj{background:linear-gradient(90deg,#a03a26,var(--sangre))}
+.exp-row .ex-pct{font-size:12px;color:var(--tinta-tenue);width:64px;text-align:right;flex-shrink:0;font-family:'Cinzel',serif}
+#exp-rutas{margin-top:14px;padding-top:12px;border-top:1px solid var(--borde);font-size:14px;color:var(--tinta-tenue);text-align:center;font-style:italic}
+.final-botones{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#btn-grimorio{cursor:pointer;background:rgba(31,45,58,.65);border:1px solid var(--borde);border-radius:6px;padding:4px 10px;transition:.2s}
+#btn-grimorio:hover{background:rgba(42,60,76,.9);border-color:var(--oro);box-shadow:0 0 12px rgba(224,184,74,.2)}
+#btn-grimorio .lbl{color:var(--tinta-tenue);text-transform:uppercase;font-size:9.5px;font-family:'Cinzel',serif;white-space:nowrap}
+#btn-grimorio:hover .lbl{color:var(--oro-claro)}
+
+/* ===================== ESCENARIO ===================== */
+#escenario{position:relative;z-index:4;flex:1;display:grid;grid-template-rows:1fr auto;
+  padding:0;overflow:hidden;transition:opacity .6s ease}
+#escenario::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  box-shadow:inset 0 0 120px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.3)}
+#escena-zona{position:relative;min-height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;
+  padding:14px 24px 0}
+#panel-inf{position:relative;z-index:3;width:100%;max-width:1360px;margin:0 auto;padding:0 24px 64px}
+
+/* (Se retiraron el halo y la sombra centrales: los personajes ya no van en el
+   centro, así que esos efectos dejaban una sombra/halo suelto en medio.
+   Cada personaje lleva su propia sombra mediante drop-shadow.) */
+
+/* retrato/figura del que habla — ahora con presencia real */
+#figura{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:center;
+  width:auto;height:100%;max-height:100%;
+  filter:drop-shadow(0 16px 26px rgba(0,0,0,.6));transition:opacity .45s, transform .45s}
+#figura.entra{animation:figEntra .55s cubic-bezier(.2,1,.3,1)}
+@keyframes figEntra{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+#figura svg{width:auto;height:100%;max-height:min(52vh,440px);max-width:90%}
+#figura .fig-video{height:100%;width:auto;max-height:min(82vh,800px);max-width:98%;object-fit:contain;
+  image-rendering:auto;filter:drop-shadow(0 12px 26px rgba(0,0,0,.6));transition:opacity .15s linear}
+@media(max-height:720px){#figura svg{max-height:42vh}}
+
+/* === DOS PERSONAJES EN ESCENA === */
+#figura{display:none}  /* slot antiguo desactivado, usamos izq/der */
+.slot-figura{position:absolute;bottom:0;z-index:2;height:100%;display:flex;align-items:flex-end;
+  justify-content:center;pointer-events:none;
+  transition:opacity .5s ease, filter .5s ease, transform .5s ease;opacity:0}
+/* más hacia el centro (no pegados al borde): así no chocan con el HUD ni dejan el centro vacío */
+#figura-izq{left:21%;transform:translateX(-30px)}
+#figura-der{right:21%;transform:translateX(30px)}
+.slot-figura.presente{opacity:1;transform:translateX(0)}
+/* el personaje se ajusta al ALTO del slot; lo limitamos para que su cabeza no
+   llegue a la esquina superior derecha donde están las redomas de Esencia */
+.slot-figura video,.slot-figura svg{height:88%;width:auto;max-width:26vw;
+  object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 26px rgba(0,0,0,.6))}
+/* personaje que NO habla: atenuado y desaturado */
+.slot-figura.inactivo{opacity:.82;filter:brightness(.72) saturate(.82)}
+.slot-figura.inactivo video,.slot-figura.inactivo svg{filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
+/* personaje que habla: destacado */
+.slot-figura.activo{opacity:1;z-index:3}
+.slot-figura.activo video,.slot-figura.activo svg{filter:drop-shadow(0 0 24px rgba(240,200,96,.28)) drop-shadow(0 12px 26px rgba(0,0,0,.6))}
+/* cuando solo hay UN personaje, se centra */
+.slot-figura.solo{left:50%!important;right:auto!important;transform:translateX(-50%)!important}
+.slot-figura.solo video,.slot-figura.solo svg{height:90%;max-width:32vw}
+
+/* placas de nombre, una por personaje, junto a cada slot */
+.placa-slot{position:absolute;z-index:5;top:14px;
+  font-family:'Cinzel',serif;font-weight:600;font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--oro-claro);background:rgba(16,24,32,.85);border:1px solid var(--borde);border-left:3px solid var(--oro);
+  padding:8px 18px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .4s, filter .4s;
+  box-shadow:0 4px 18px rgba(0,0,0,.5),0 0 18px rgba(224,184,74,.15);backdrop-filter:blur(3px);
+  pointer-events:none}
+#placa-izq{left:4%}
+#placa-der{right:4%}
+.placa-slot.visible{opacity:1}
+/* la placa se atenúa o ilumina igual que su personaje */
+.placa-slot.inactiva{opacity:.5;filter:brightness(.6) saturate(.7);border-left-color:var(--tinta-tenue)}
+.placa-slot.activa{opacity:1;filter:none;border-left-color:var(--oro);
+  box-shadow:0 4px 18px rgba(0,0,0,.5),0 0 22px rgba(240,200,96,.35)}
+/* placa centrada cuando el personaje está solo */
+.placa-slot.solo{left:50%!important;right:auto!important;transform:translateX(-50%)}
+
+/* ===================== CAJA DE DIÁLOGO ===================== */
+#dialogo{position:relative;z-index:3;margin:26px auto 0;max-width:900px;
+  background:linear-gradient(180deg,transparent 0%,rgba(8,11,16,var(--op-caja,.55)) 26%,rgba(6,9,13,calc(var(--op-caja,.55) + .31)) 100%);
+  border:none;border-radius:14px;padding:30px 34px 42px;
+  min-height:130px}
+/* animación de entrada de la ventana de diálogo (se aplica al cambiar de hablante) */
+#dialogo.aparece{animation:dialogoEntra .45s cubic-bezier(.2,1,.3,1)}
+@keyframes dialogoEntra{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+#dialogo.aparece #hablante{animation:dialogoEntra .5s cubic-bezier(.2,1,.3,1) .08s both}
+#dialogo.aparece::before{animation:filiCrece .6s ease .1s both}
+@keyframes filiCrece{from{opacity:0;width:0}to{opacity:1;width:min(280px,52%)}}
+/* sacudida del personaje al enfadarse/gritar — se aplica al MEDIA interno
+   (no al slot, que ya usa transform para posicionarse) */
+@keyframes figSacude{0%,100%{transform:translateX(0)}12%{transform:translateX(-10px) rotate(-1.5deg)}25%{transform:translateX(9px) rotate(1.5deg)}40%{transform:translateX(-7px)}55%{transform:translateX(6px)}70%{transform:translateX(-4px)}85%{transform:translateX(2px)}}
+.slot-figura.sacude video,.slot-figura.sacude svg{animation:figSacude .55s ease}
+@keyframes figGrito{0%{transform:scale(1)}25%{transform:scale(1.07) translateY(-4px)}55%{transform:scale(.98)}100%{transform:scale(1)}}
+.slot-figura.grito video,.slot-figura.grito svg{animation:figGrito .45s ease}
+/* destello de color sobre el personaje según la emoción */
+.fig-flash{position:absolute;left:0;right:0;top:0;bottom:0;z-index:5;pointer-events:none;opacity:0;mix-blend-mode:screen}
+.fig-flash.activo{animation:figFlash .65s ease}
+@keyframes figFlash{0%{opacity:0}25%{opacity:.6}100%{opacity:0}}
+/* filigrana fina de separación sobre el diálogo (en vez de borde de caja) */
+#dialogo::before{content:"";position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  width:min(280px,52%);height:1px;
+  background:linear-gradient(90deg,transparent,rgba(205,168,87,.7),transparent)}
+#dialogo::after{content:"❖";position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  color:var(--oro);font-size:9px;opacity:.7}
+/* nombre del hablante: versalitas grandes abajo-izquierda, sin marco (estilo HK/Elderbug) */
+#hablante{position:relative;display:block;z-index:4;margin-bottom:10px;
+  font-family:'Cinzel',serif;font-weight:600;font-size:clamp(16px,2vw,22px);letter-spacing:.12em;
+  color:#f3e4c0;text-shadow:0 0 18px rgba(240,200,96,.45),0 2px 6px rgba(0,0,0,.6);
+  text-transform:uppercase;background:none;border:none;padding:0}
+#hablante:empty{display:none}
+#hablante .tag{display:inline-block;margin-left:10px;font-family:'EB Garamond',serif;font-style:italic;
+  font-weight:400;color:var(--tinta-tenue);font-size:14px;letter-spacing:0;text-transform:none;text-shadow:none}
+#texto{font-size:clamp(18px,2.1vw,21px);line-height:1.62;min-height:40px;color:#eef3f5;
+  text-shadow:0 1px 8px rgba(0,0,0,.7)}
+#texto em{color:var(--vitriolo);font-style:italic}
+#texto .q{color:var(--oro-claro);font-weight:500}
+#continuar{position:absolute;right:26px;bottom:14px;color:var(--oro);font-family:'Cinzel',serif;
+  font-size:12px;letter-spacing:.16em;text-transform:uppercase;animation:parpadeo 1.2s ease-in-out infinite;cursor:pointer;
+  text-shadow:0 0 10px rgba(205,168,87,.5)}
+@keyframes parpadeo{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* barra de avance automático (sustituye al botón Continuar) */
+.auto-prog{height:7px;margin-top:14px;background:rgba(0,0,0,.4);border-radius:4px;overflow:hidden;border:1px solid var(--borde);
+  grid-column:1 / -1}
+.auto-prog i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,var(--vitriolo),#9dffce);box-shadow:0 0 10px rgba(95,214,164,.6)}
+
+/* ===================== OPCIONES (rejilla 2×2) ===================== */
+#opciones{position:relative;z-index:3;display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  margin:14px auto 0;max-width:1000px}
+.opcion{background:linear-gradient(180deg,rgba(38,55,71,.22),rgba(26,39,51,.26));
+  border:1px solid var(--borde);color:var(--tinta);font-family:'EB Garamond',serif;font-size:16px;line-height:1.4;
+  text-align:center;padding:14px 20px 14px 16px;cursor:pointer;border-radius:6px;
+  transition:.18s;position:relative;overflow:hidden;min-height:62px;
+  display:flex;align-items:center;justify-content:center;gap:9px}
+.opcion .op-txt{flex:0 1 auto;text-align:center}
+/* si el número de opciones es impar, la última ocupa toda la fila y se centra */
+#opciones.impar .opcion:last-child{grid-column:1 / -1}
+/* el ❖ como adorno fijo a la izquierda, alineado al centro del bloque de texto */
+.opcion:before{content:"❖";color:var(--oro);font-size:12px;opacity:.7;transition:.18s;
+  flex:0 0 auto;align-self:center}
+.opcion:after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(247,223,147,.13),transparent);transition:left .5s;pointer-events:none}
+.opcion:hover{border-color:var(--oro-claro);background:linear-gradient(180deg,rgba(48,69,89,.98),rgba(33,49,64,.98));
+  transform:translateY(-2px);box-shadow:0 4px 16px rgba(224,184,74,.22), inset 0 1px 0 rgba(247,223,147,.15);color:var(--oro-claro)}
+.opcion:hover:before{opacity:1;transform:scale(1.2)}
+.opcion:hover:after{left:130%}
+.opcion:disabled{cursor:default;transform:none}
+.opcion.correcta-fx{animation:flashVerde .6s}
+.opcion.error-fx{animation:flashRojo .5s}
+@keyframes flashVerde{0%,100%{}40%{background:rgba(127,191,77,.4);border-color:var(--vitriolo)}}
+@keyframes flashRojo{0%,100%{}20%,60%{background:rgba(224,89,63,.4);border-color:var(--sangre);transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+/* en pantallas estrechas, una sola columna */
+@media(max-width:680px){#opciones{grid-template-columns:1fr}#opciones.impar .opcion:last-child{grid-column:auto}}
+
+/* ===================== PANTALLAS OVERLAY ===================== */
+.pantalla{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:30px;
+  background:radial-gradient(ellipse at center,rgba(18,27,36,.97),rgba(8,13,18,.99))}
+.pantalla.oculto{display:none}
+
+/* títulos de panel — estilo Hollow Knight (Cinzel, versalitas, oro) */
+.pantalla h2{font-family:'Cinzel',serif;font-weight:600;color:#f3e4c0;letter-spacing:.12em;
+  font-size:clamp(24px,4vw,38px);text-transform:uppercase;margin:0 0 6px;
+  text-shadow:0 0 26px rgba(220,180,90,.4)}
+#opciones-sub,#logros-sub,#grimorio-sub,#pistas-sub,#galeria-sub{font-family:'EB Garamond',serif;font-style:italic;
+  color:var(--tinta-tenue);font-size:15px;margin-bottom:26px}
+
+/* panel de Opciones */
+#opciones-cuerpo{width:min(480px,86vw);display:flex;flex-direction:column;gap:22px;text-align:left}
+.opt-fila{display:grid;grid-template-columns:1fr 160px 46px;align-items:center;gap:14px}
+.opt-fila-toggle{grid-template-columns:1fr auto}
+.opt-lbl{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.08em;color:#cdbf98;text-transform:uppercase}
+.opt-hint{display:block;font-family:'EB Garamond',serif;font-style:italic;text-transform:none;
+  font-size:12px;letter-spacing:0;color:#7f7257;margin-top:3px}
+.opt-val{font-family:'Cinzel',serif;font-size:13px;color:#e9d8b0;text-align:right}
+.opt-slider{-webkit-appearance:none;appearance:none;height:2px;background:rgba(205,168,87,.3);
+  border-radius:2px;outline:none;cursor:pointer}
+.opt-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
+  background:#f3e4c0;border:1px solid #cda857;box-shadow:0 0 10px rgba(205,168,87,.6);cursor:pointer}
+.opt-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;
+  background:#f3e4c0;border:1px solid #cda857;box-shadow:0 0 10px rgba(205,168,87,.6);cursor:pointer}
+.opt-toggle{width:52px;height:26px;border-radius:13px;border:1px solid var(--borde);
+  background:rgba(0,0,0,.35);position:relative;cursor:pointer;transition:.3s;padding:0}
+.opt-toggle .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:#7f7257;transition:.3s}
+.opt-toggle[aria-checked="true"]{background:rgba(205,168,87,.28);border-color:var(--oro)}
+.opt-toggle[aria-checked="true"] .knob{left:28px;background:#f3e4c0;box-shadow:0 0 10px rgba(205,168,87,.7)}
+
+/* --- INICIO --- */
+#inicio{justify-content:flex-start;padding:0;overflow-y:auto;
+  background:radial-gradient(ellipse at center,rgba(18,27,36,.92),rgba(8,13,18,.97))}
+#inicio-particulas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* ════════════ MENÚ DE INICIO — estilo Hollow Knight ════════════ */
+#inicio{justify-content:center;align-items:center;padding:0;overflow:hidden;
+  background:radial-gradient(ellipse 60% 80% at 50% 32%, #1a1408 0%, #0d0a05 46%, #050403 100%)}
+#inicio-particulas{position:absolute;inset:0;z-index:1;pointer-events:none}
+#inicio-haz{position:absolute;top:0;left:50%;transform:translateX(-50%);width:34%;height:74%;z-index:1;
+  background:linear-gradient(180deg,rgba(220,180,90,.10) 0%,rgba(200,160,70,.04) 40%,transparent 80%);
+  filter:blur(22px);pointer-events:none}
+#inicio::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 50% 120%, rgba(0,0,0,.55), transparent),
+            radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.5))}
+
+.inicio-vista{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:opacity .7s ease}
+.inicio-vista.oculto-vista{opacity:0;pointer-events:none}
+
+/* --- título --- */
+#titulo-wrap{text-align:center;margin-bottom:7%}
+#titulo{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(30px,6vw,68px);
+  color:#f3e4c0;letter-spacing:.05em;line-height:1;margin:0;
+  text-shadow:0 0 28px rgba(220,180,90,.45),0 0 60px rgba(200,150,60,.2)}
+#subtitulo{font-family:'Cinzel',serif;font-weight:500;font-size:clamp(15px,3vw,34px);
+  color:#e9d8b0;letter-spacing:.34em;margin-top:.35em;
+  text-shadow:0 0 22px rgba(220,180,90,.4)}
+#filigrana-titulo{display:block;width:min(46%,340px);height:26px;margin:14px auto 0;color:#cda857;opacity:.85}
+
+/* --- menú principal --- */
+#menu-hk{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.7vh,18px)}
+.mi{font-family:'Cinzel',serif;font-weight:500;color:#b5a584;font-size:clamp(15px,2.4vw,27px);
+  letter-spacing:.16em;cursor:pointer;position:relative;padding:2px 46px;text-align:center;
+  transition:color .3s,text-shadow .3s}
+.mi:hover,.mi.sel{color:#f6ecd2;text-shadow:0 0 18px rgba(230,190,100,.6)}
+.mi.sel::before,.mi.sel::after{position:absolute;top:50%;transform:translateY(-50%);
+  color:#cda857;font-size:.7em;animation:miFade .35s ease}
+.mi.sel::before{content:"❖";left:8px}
+.mi.sel::after{content:"❖";right:8px}
+.mi.disabled{opacity:.35;cursor:default;pointer-events:none}
+@keyframes miFade{from{opacity:0}to{opacity:1}}
+
+#creditos-inicio{position:absolute;left:3%;bottom:5%;z-index:6;font-family:'Cinzel',serif;
+  color:#6b5e44;font-size:11px;letter-spacing:.2em}
+#marca-inicio{position:absolute;right:3%;bottom:5%;z-index:6;font-family:'Cinzel',serif;
+  color:#8a7a58;font-size:11px;letter-spacing:.18em;text-align:right;line-height:1.3}
+.marca-ico{font-size:15px}
+
+/* --- entrada escalonada del menú principal --- */
+#inicio.entra #titulo-wrap{animation:menuEntra .8s cubic-bezier(.2,1,.3,1) .1s both}
+#inicio.entra .mi{animation:menuEntra .7s cubic-bezier(.2,1,.3,1) both}
+#inicio.entra #menu-hk .mi:nth-child(1){animation-delay:.30s}
+#inicio.entra #menu-hk .mi:nth-child(2){animation-delay:.40s}
+#inicio.entra #menu-hk .mi:nth-child(3){animation-delay:.50s}
+#inicio.entra #menu-hk .mi:nth-child(4){animation-delay:.60s}
+#inicio.entra #creditos-inicio,#inicio.entra #marca-inicio{animation:menuFade 1s ease .8s both}
+@keyframes menuEntra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes menuFade{from{opacity:0}to{opacity:1}}
+
+/* --- vista selección de grimorio --- */
+#vista-grimorios{justify-content:flex-start;padding-top:6%}
+#grim-cabecera{text-align:center;margin-bottom:4%}
+#grim-titulo{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(20px,3.6vw,40px);
+  color:#f3e4c0;letter-spacing:.14em;text-shadow:0 0 24px rgba(220,180,90,.4)}
+#grim-filigrana{display:block;width:min(40%,300px);height:22px;margin:10px auto 0;color:#cda857;opacity:.8}
+#grim-slots{width:min(74%,720px);display:flex;flex-direction:column;gap:clamp(6px,2vh,18px)}
+
+.slot{display:flex;align-items:center;gap:16px;padding:12px 6px;
+  border-top:1px solid rgba(205,168,87,.32);cursor:pointer;
+  opacity:0;transform:translateX(-26px);transition:background .3s}
+.slot:hover{background:linear-gradient(90deg,rgba(205,168,87,.08),transparent)}
+.slot.in{animation:slotIn .55s cubic-bezier(.2,.7,.3,1) forwards}
+.slot .flo{flex-shrink:0;width:56px;height:32px;margin-bottom:-6px;color:#d9bd75}
+.slot .num{font-family:'Cinzel',serif;color:#e9d8b0;font-size:clamp(16px,2.4vw,30px);font-weight:600;min-width:46px}
+.slot .cuerpo{flex:1;display:flex;flex-direction:column;gap:2px}
+.slot .lbl{font-family:'Cinzel',serif;color:#cdbf98;font-size:clamp(13px,1.9vw,23px);font-weight:500;letter-spacing:.14em}
+.slot .meta{font-family:'Cinzel',serif;color:#7f7257;font-size:clamp(10px,1.3vw,13px);letter-spacing:.1em}
+.slot .borrar{flex-shrink:0;font-family:'Cinzel',serif;color:#7a5a3a;font-size:18px;padding:4px 10px;
+  cursor:pointer;border-radius:4px;opacity:0;transition:.25s}
+.slot:hover .borrar{opacity:.6}
+.slot .borrar:hover{opacity:1;color:#e0593f;background:rgba(224,89,63,.12)}
+@keyframes slotIn{to{opacity:1;transform:translateX(0)}}
+
+.mi-volver{font-family:'Cinzel',serif;font-weight:500;color:#b5a584;font-size:clamp(14px,2vw,22px);
+  letter-spacing:.12em;cursor:pointer;transition:color .3s,text-shadow .3s}
+.mi-volver:hover{color:#f6ecd2;text-shadow:0 0 16px rgba(230,190,100,.55)}
+#grim-pie{margin-top:auto;margin-bottom:5%;display:flex;gap:clamp(24px,6vw,72px);align-items:center;justify-content:center}
+.grim-peligro{color:#9a6b58}
+.grim-peligro:hover{color:#e0593f;text-shadow:0 0 16px rgba(224,89,63,.5)}
+
+/* botón estilo Hollow Knight (paneles: Cerrar, revivir, reiniciar) */
+.menu-btn{font-family:'Cinzel',serif;font-weight:500;font-size:15px;letter-spacing:.14em;
+  text-transform:uppercase;color:#cdbf98;background:transparent;border:none;cursor:pointer;
+  padding:10px 30px;position:relative;transition:color .3s,text-shadow .3s}
+.menu-btn::before,.menu-btn::after{content:"❖";position:absolute;top:50%;transform:translateY(-50%);
+  color:var(--oro);font-size:.62em;opacity:0;transition:opacity .3s}
+.menu-btn::before{left:6px}.menu-btn::after{right:6px}
+.menu-btn:hover{color:#f6ecd2;text-shadow:0 0 16px rgba(230,190,100,.55)}
+.menu-btn:hover::before,.menu-btn:hover::after{opacity:1}
+.menu-btn.sec{font-size:13px;color:#a89976}
+.menu-btn:active{transform:translateY(1px)}
+
+#inicio-fade{position:absolute;inset:0;z-index:9;background:#000;opacity:0;pointer-events:none;
+  transition:opacity .45s ease}
+#inicio-fade.activo{opacity:.6}
+
+
+/* --- MUERTE --- */
+#muerte{background:radial-gradient(ellipse at center,rgba(48,16,22,.97),rgba(10,8,12,.99))}
+#calavera{font-size:90px;filter:drop-shadow(0 0 30px rgba(224,89,63,.6));animation:flotar 3s ease-in-out infinite}
+@keyframes flotar{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+#muerte-titulo{font-family:'Cinzel Decorative',serif;font-weight:900;font-size:clamp(34px,8vw,64px);
+  color:var(--sangre);text-shadow:0 0 30px rgba(224,89,63,.5);margin:6px 0 18px}
+#muerte-msg{font-size:21px;line-height:1.5;max-width:540px;color:var(--tinta);margin-bottom:8px;font-style:italic}
+#muerte-sub{color:var(--tinta-tenue);font-size:15px;margin-bottom:28px}
+
+/* --- FINAL --- */
+#final-icono{font-size:96px;margin-bottom:8px;animation:flotar 4s ease-in-out infinite}
+#final-titulo{font-family:'Cinzel Decorative',serif;font-weight:900;font-size:clamp(34px,7vw,64px);
+  color:var(--oro-claro);text-shadow:0 0 36px rgba(240,200,96,.5);margin-bottom:8px;line-height:1.05}
+#final-tag{font-family:'Cinzel',serif;letter-spacing:.3em;text-transform:uppercase;color:var(--vitriolo);font-size:15px;margin-bottom:24px}
+#final-msg{font-size:22px;line-height:1.6;max-width:760px;margin-bottom:30px}
+#final-stats{display:flex;gap:48px;margin-bottom:34px;flex-wrap:wrap;justify-content:center}
+.fstat{font-family:'Cinzel',serif}
+.fstat span{display:block;font-size:40px;color:var(--oro-claro);text-shadow:0 0 16px rgba(240,200,96,.4)}
+.fstat label{font-size:12px;text-transform:uppercase;letter-spacing:.15em;color:var(--tinta-tenue)}
+
+/* --- LOGROS --- */
+#logros-panel{background:rgba(6,4,2,.98)}
+
+#logros-sub{color:var(--tinta-tenue);margin-bottom:22px;font-style:italic;font-size:14px}
+#lista-logros{display:grid;grid-template-columns:1fr;gap:10px;width:100%;max-width:560px;
+  max-height:62%;overflow-y:auto;padding-right:6px}
+@media(min-width:620px){#lista-logros{grid-template-columns:1fr 1fr}}
+.logro{display:flex;gap:12px;align-items:center;text-align:left;background:rgba(26,38,49,.9);
+  border:1px solid var(--borde);border-radius:5px;padding:11px 13px;transition:.2s}
+.logro.bloq{opacity:.4;filter:grayscale(.8)}
+.logro-ico{font-size:28px;flex-shrink:0;width:38px;text-align:center}
+.logro-txt b{font-family:'Cinzel',serif;color:var(--oro-claro);font-size:14px;display:block}
+.logro-txt small{color:var(--tinta-tenue);font-size:12.5px;line-height:1.3}
+.logro.desbloqueado{box-shadow:0 0 14px rgba(127,191,77,.18);border-color:rgba(127,191,77,.4)}
+
+/* toast de logro — estilo Hollow Knight */
+#toast{position:absolute;top:64px;right:18px;z-index:40;
+  background:linear-gradient(180deg,rgba(10,13,18,.96),rgba(6,9,13,.98));
+  border:1px solid rgba(205,168,87,.45);border-radius:4px;padding:14px 20px;display:flex;gap:13px;align-items:center;
+  box-shadow:0 8px 32px rgba(0,0,0,.7),0 0 24px rgba(205,168,87,.15);
+  transform:translateX(140%);transition:transform .5s cubic-bezier(.2,1.2,.3,1);max-width:320px}
+#toast::before{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(205,168,87,.7),transparent)}
+#toast.muestra{transform:translateX(0)}
+#toast .t-ico{font-size:26px;filter:drop-shadow(0 0 8px rgba(205,168,87,.5));flex-shrink:0}
+#toast .t-txt b{font-family:'Cinzel',serif;color:#cda857;font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;display:block;margin-bottom:3px}
+#toast .t-txt span{color:#f3e4c0;font-family:'Cinzel',serif;font-weight:500;font-size:14px;letter-spacing:.04em;
+  text-shadow:0 0 14px rgba(240,200,96,.35)}
+
+/* tooltip estilo Hollow Knight (sustituye al title nativo del navegador) */
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;
+  transform:translateX(-50%) translateY(4px);white-space:nowrap;pointer-events:none;
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#f3e4c0;background:linear-gradient(180deg,rgba(12,15,20,.97),rgba(7,10,14,.98));
+  border:1px solid rgba(205,168,87,.45);border-radius:3px;padding:5px 10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);opacity:0;transition:opacity .2s ease,transform .2s ease;z-index:80}
+[data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+/* la ✕ del grimorio: tooltip debajo (porque arriba se sale de la fila) */
+.borrar[data-tip]::after{bottom:auto;top:calc(100% + 8px);transform:translateX(-50%) translateY(-4px)}
+.borrar[data-tip]:hover::after{transform:translateX(-50%) translateY(0)}
+
+/* modal de confirmación — estilo Hollow Knight */
+#confirm-modal{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(5,6,9,.82),rgba(3,4,6,.92));
+  opacity:1;transition:opacity .3s ease}
+#confirm-modal.oculto{display:none}
+#confirm-modal.cerrando{opacity:0}
+#confirm-caja{text-align:center;padding:40px 46px;max-width:440px;
+  background:linear-gradient(180deg,rgba(12,15,20,.96),rgba(7,10,14,.98));
+  border:1px solid rgba(205,168,87,.35);border-radius:6px;
+  box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 30px rgba(205,168,87,.1);
+  animation:confirmEntra .4s cubic-bezier(.2,1.2,.3,1)}
+@keyframes confirmEntra{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+#confirm-filigrana{display:block;width:200px;height:18px;margin:0 auto 16px;opacity:.85}
+#confirm-titulo{font-family:'Cinzel',serif;font-weight:600;color:#f3e4c0;font-size:clamp(20px,3vw,28px);
+  letter-spacing:.14em;text-transform:uppercase;text-shadow:0 0 24px rgba(220,180,90,.4);margin-bottom:14px}
+#confirm-texto{font-family:'EB Garamond',serif;font-style:italic;color:#cdbf98;font-size:16px;
+  line-height:1.5;margin-bottom:28px}
+#confirm-botones{display:flex;gap:28px;justify-content:center;align-items:center}
+.confirm-peligro{color:#c66!important}
+.confirm-peligro:hover{color:#e0593f!important;text-shadow:0 0 16px rgba(224,89,63,.55)!important}
+.confirm-peligro::before,.confirm-peligro::after{color:#e0593f!important}
+
+/* feedback de química */
+#feedback{position:relative;z-index:3;margin-top:12px;padding:12px 16px;border-radius:5px;border-left:3px solid;
+  font-size:16px;line-height:1.45;display:none;animation:apareceFb .4s}
+#feedback.ok{display:block;background:rgba(61,94,37,.25);border-color:var(--vitriolo);color:var(--tinta)}
+#feedback.mal{display:block;background:rgba(224,89,63,.22);border-color:var(--sangre);color:var(--tinta)}
+#feedback b{font-family:'Cinzel',serif}
+@keyframes apareceFb{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* sonido toggle */
+#snd{position:absolute;top:10px;right:14px;z-index:50;background:none;border:none;color:var(--oro);font-size:18px;cursor:pointer;opacity:.7}
+#snd:hover{opacity:1}
+
+/* destello de transmutación */
+#flash{position:absolute;inset:0;z-index:30;background:radial-gradient(circle,rgba(127,191,77,.7),transparent 70%);
+  opacity:0;pointer-events:none}
+#flash.go{animation:transmuta .7s ease}
+@keyframes transmuta{0%{opacity:0;transform:scale(.5)}30%{opacity:1}100%{opacity:0;transform:scale(1.6)}}
+
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--vitriolo-osc);border-radius:4px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.3)}
+.fade{animation:fadeIn .5s}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ===================== RESPONSIVE / MÓVIL ===================== */
+@media(max-width:760px){
+  #hud{flex-wrap:wrap;padding:9px 14px;gap:8px 12px}
+  #estados{padding:7px 14px;gap:10px 14px}
+  .estado-barra .lbl{font-size:8.5px}
+  #escena-zona{padding:10px 14px 0}
+  #figura svg{max-height:36vh}
+  #panel-inf{padding:0 14px 16px}
+  #dialogo{padding:14px 16px 16px;min-height:104px}
+  #texto{font-size:17px}
+  .opcion{font-size:15px;padding:11px 13px}
+  #nombre-placa{font-size:11px;padding:6px 12px;top:10px;left:12px}
+  #titulo{font-size:clamp(28px,9vw,44px)}
+  #subtitulo{font-size:clamp(13px,5vw,22px)}
+  .mi{font-size:clamp(15px,5vw,22px)}
+}
+@media(max-width:760px) and (orientation:landscape){
+  #figura svg{max-height:54vh}
+  #titulo{font-size:clamp(26px,6vw,40px)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="marco">
+  <div id="fondo"><video id="fondo-video" autoplay muted playsinline preload="auto"></video><canvas id="cv"></canvas><div class="escena-tinte" id="tinte"></div></div>
+  <div id="flash"></div>
+  <div id="transicion"><div id="trans-inner"><div id="trans-sigilo"></div><div id="trans-titulo"></div><div id="trans-sub"></div></div></div>
+
+  <!-- HUD (cabecera) -->
+  <div id="hud" class="oculto">
+    <div id="esencia-hud"><div id="redomas"></div></div>
+  </div>
+
+  <!-- ICONOS DISCRETOS (esquina inferior izquierda) -->
+  <div id="estados" class="oculto">
+    <div id="iconos-juego">
+      <button class="ico-btn" id="btn-pistas" data-tip="Pistas" aria-label="Pistas">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20"/></svg></button>
+      <button class="ico-btn" id="btn-grimorio" data-tip="Grimorio" aria-label="Grimorio">
+        <svg viewBox="0 0 24 24"><path d="M5 4 h11 a2 2 0 0 1 2 2 v14 a1 1 0 0 0 -1 -1 H5 z"/><path d="M5 19 a2 2 0 0 1 0 -15"/><line x1="9" y1="8" x2="14" y2="8"/></svg></button>
+      <button class="ico-btn" id="btn-logros-hud" data-tip="Logros" aria-label="Logros">
+        <svg viewBox="0 0 24 24"><path d="M7 4 h10 v4 a5 5 0 0 1 -10 0 z"/><path d="M7 5 H4 v2 a3 3 0 0 0 3 3 M17 5 h3 v2 a3 3 0 0 1 -3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 20 h8 l-1 -3 H9 z"/></svg></button>
+      <button class="ico-btn" id="btn-opciones-hud" data-tip="Opciones" aria-label="Opciones">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2 v3 M12 19 v3 M2 12 h3 M19 12 h3 M5 5 l2 2 M17 17 l2 2 M19 5 l-2 2 M7 17 l-2 2"/></svg></button>
+      <button class="ico-btn" id="btn-snd" data-tip="Sonido" aria-label="Sonido">
+        <svg viewBox="0 0 24 24" id="ico-snd-svg"><path d="M4 9 v6 h4 l5 4 V5 L8 9 z"/><path class="snd-on" d="M16 9 a4 4 0 0 1 0 6 M18.5 7 a7 7 0 0 1 0 10"/></svg></button>
+      <button class="ico-btn" id="btn-fullscreen" data-tip="Pantalla completa" aria-label="Pantalla completa">
+        <svg viewBox="0 0 24 24"><path d="M4 9 V4 h5 M20 9 V4 h-5 M4 15 v5 h5 M20 15 v5 h-5"/></svg></button>
+      <button class="ico-btn" id="btn-menu-hud" data-tip="Menú" aria-label="Menú">
+        <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+    </div>
+    <span id="pistas-lista" style="display:none"></span>
+    <div id="barra-sienna-wrap" style="display:none"><i id="b-sienna"></i></div>
+    <i id="b-sospecha" style="display:none"></i>
+  </div>
+
+  <!-- ESCENARIO -->
+  <div id="escenario">
+    <div id="escena-zona">
+      <div id="figura-izq" class="slot-figura"></div>
+      <div id="figura-der" class="slot-figura"></div>
+      <div id="figura"></div>
+    </div>
+    <div id="panel-inf">
+      <div id="dialogo">
+        <div id="hablante"></div>
+        <div id="texto"></div>
+        <div id="continuar">continuar ▸</div>
+      </div>
+      <div id="feedback"></div>
+      <div id="opciones"></div>
+    </div>
+  </div>
+
+  <!-- INICIO -->
+  <div id="inicio" class="pantalla">
+    <canvas id="inicio-particulas"></canvas>
+    <div id="inicio-haz"></div>
+
+    <!-- VISTA 1: MENÚ PRINCIPAL -->
+    <div id="vista-menu" class="inicio-vista">
+      <div id="titulo-wrap">
+        <h1 id="titulo">El Alquimista</h1>
+        <div id="subtitulo">DE VITRIOL</div>
+        <svg id="filigrana-titulo" viewBox="0 0 340 26" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="1.1" fill="none">
+            <path d="M170 13 q-30 -12 -60 0 q-18 7 -36 0 q-12 -5 -24 0"/>
+            <path d="M170 13 q30 -12 60 0 q18 7 36 0 q12 -5 24 0"/>
+            <circle cx="170" cy="13" r="4" fill="currentColor" stroke="none"/>
+            <path d="M150 13 q20 -10 20 -10 q0 0 20 10" opacity=".55"/>
+          </g>
+        </svg>
+      </div>
+      <nav id="menu-hk">
+        <div class="mi" data-act="comenzar">Comenzar Obra</div>
+        <div class="mi" data-act="opciones">Opciones</div>
+        <div class="mi" data-act="logros">Logros</div>
+        <div class="mi" data-act="salir">Abandonar</div>
+      </nav>
+      <div id="creditos-inicio">v 0.9 · MIRAE STUDIO</div>
+      <div id="marca-inicio"><span class="marca-ico">⚗</span><br>laboratorio</div>
+    </div>
+
+    <!-- VISTA 2: SELECCIÓN DE GRIMORIO -->
+    <div id="vista-grimorios" class="inicio-vista oculto-vista">
+      <div id="grim-cabecera">
+        <div id="grim-titulo">SELECCIONAR GRIMORIO</div>
+        <svg id="grim-filigrana" viewBox="0 0 300 22" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="1" fill="none">
+            <path d="M150 11 q-28 -10 -55 0 q-16 6 -33 0"/><path d="M150 11 q28 -10 55 0 q16 6 33 0"/>
+            <circle cx="150" cy="11" r="3.4" fill="currentColor" stroke="none"/>
+          </g>
+        </svg>
+      </div>
+      <div id="grim-slots"></div>
+      <div id="grim-pie">
+        <span id="grim-volver" class="mi-volver">Volver</span>
+        <span id="grim-borrar-todo" class="mi-volver grim-peligro">Romper todos</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="inicio-fade"></div>
+
+
+  <!-- MUERTE -->
+  <div id="muerte" class="pantalla oculto">
+    <div id="calavera">☠</div>
+    <h2 id="muerte-titulo">Has Perecido</h2>
+    <p id="muerte-msg"></p>
+    <p id="muerte-sub"></p>
+    <button class="menu-btn" id="btn-revivir">Volver a la vida</button>
+    <button class="menu-btn sec" id="btn-muerte-menu">Rendirse (al menú)</button>
+  </div>
+
+  <!-- FINAL / EXPEDIENTE -->
+  <div id="final" class="pantalla oculto">
+    <div id="final-icono">⚗️</div>
+    <h2 id="final-titulo"></h2>
+    <div id="final-tag"></div>
+    <p id="final-msg"></p>
+    <div id="final-stats">
+      <div class="fstat"><span id="fs-vidas">0</span><label>Esencia restante</label></div>
+      <div class="fstat"><span id="fs-aciertos">0</span><label>Pruebas superadas</label></div>
+      <div class="fstat"><span id="fs-precision">0%</span><label>Precisión</label></div>
+    </div>
+    <div id="expediente">
+      <div class="exp-titulo">Expediente del Aprendiz · Dominio por materia</div>
+      <div id="exp-lista"></div>
+      <div id="exp-rutas"></div>
+    </div>
+    <div class="final-botones">
+      <button class="menu-btn" id="btn-final-reiniciar">Reescribir el destino</button>
+      <button class="menu-btn sec" id="btn-final-galeria">Ver destinos</button>
+      <button class="menu-btn sec" id="btn-final-logros">Ver logros</button>
+    </div>
+  </div>
+
+  <!-- LOGROS -->
+  <div id="logros-panel" class="pantalla oculto">
+    <h2>Salón de Logros</h2>
+    <div id="logros-sub"></div>
+    <div id="lista-logros"></div>
+    <button class="menu-btn sec" id="btn-cerrar-logros" style="margin-top:18px">Cerrar</button>
+  </div>
+
+  <!-- PISTAS -->
+  <div id="pistas-panel" class="pantalla oculto">
+    <h2>El Cuaderno del Alquimista</h2>
+    <div id="pistas-sub">Lo que has averiguado sobre la conspiración.</div>
+    <div id="lista-pistas"></div>
+    <button class="menu-btn sec" id="btn-cerrar-pistas" style="margin-top:18px">Cerrar el cuaderno</button>
+  </div>
+
+  <!-- GRIMORIO (codex de química) -->
+  <div id="grimorio-panel" class="pantalla oculto">
+    <h2>Grimorio de Vitriol</h2>
+    <div id="grimorio-sub">La química que todo alquimista debe dominar. Lo que has visto en tu viaje queda marcado.</div>
+    <div id="lista-grimorio"></div>
+    <button class="menu-btn sec" id="btn-cerrar-grimorio" style="margin-top:18px">Cerrar el grimorio</button>
+  </div>
+
+  <!-- OPCIONES -->
+  <div id="opciones-panel" class="pantalla oculto">
+    <h2>Opciones</h2>
+    <div id="opciones-sub">Ajusta tu experiencia en el laboratorio.</div>
+    <div id="opciones-cuerpo">
+      <div class="opt-fila">
+        <label class="opt-lbl">Volumen · Música</label>
+        <input type="range" class="opt-slider" id="op-musica" min="0" max="100" step="1" value="70">
+        <span class="opt-val" id="op-musica-val">70</span>
+      </div>
+      <div class="opt-fila">
+        <label class="opt-lbl">Volumen · Efectos</label>
+        <input type="range" class="opt-slider" id="op-sfx" min="0" max="100" step="1" value="80">
+        <span class="opt-val" id="op-sfx-val">80</span>
+      </div>
+      <div class="opt-fila">
+        <label class="opt-lbl">Velocidad del texto</label>
+        <input type="range" class="opt-slider" id="op-vel" min="0" max="60" step="2" value="22">
+        <span class="opt-val" id="op-vel-val">Normal</span>
+      </div>
+      <div class="opt-fila">
+        <label class="opt-lbl">Opacidad de la caja de texto</label>
+        <input type="range" class="opt-slider" id="op-opacidad" min="20" max="100" step="5" value="55">
+        <span class="opt-val" id="op-opacidad-val">55</span>
+      </div>
+      <div class="opt-fila opt-fila-toggle">
+        <label class="opt-lbl">Avance automático
+          <span class="opt-hint">tras leer, el diálogo avanza solo</span></label>
+        <button class="opt-toggle" id="op-auto" role="switch" aria-checked="false"><span class="knob"></span></button>
+      </div>
+    </div>
+    <button class="menu-btn sec" id="btn-cerrar-opciones" style="margin-top:22px">Cerrar</button>
+  </div>
+
+  <!-- GALERÍA DE FINALES -->
+  <div id="galeria-panel" class="pantalla oculto">
+    <h2>Los Destinos del Alquimista</h2>
+    <div id="galeria-sub"></div>
+    <div id="lista-galeria"></div>
+    <button class="menu-btn sec" id="btn-cerrar-galeria" style="margin-top:18px">Cerrar</button>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast"><div class="t-ico">🏅</div><div class="t-txt"><b>Logro obtenido</b><span id="toast-nombre"></span></div></div>
+
+  <!-- modal de confirmación estilo Hollow Knight -->
+  <div id="confirm-modal" class="oculto">
+    <div id="confirm-caja">
+      <svg id="confirm-filigrana" viewBox="0 0 260 20" aria-hidden="true">
+        <g stroke="#cda857" stroke-width="1" fill="none">
+          <path d="M130 10 q-26 -9 -50 0 q-14 5 -30 0"/><path d="M130 10 q26 -9 50 0 q14 5 30 0"/>
+          <circle cx="130" cy="10" r="3" fill="#cda857" stroke="none"/>
+        </g>
+      </svg>
+      <div id="confirm-titulo">Romper grimorio</div>
+      <div id="confirm-texto">Esta obra se perderá para siempre. ¿Continúas?</div>
+      <div id="confirm-botones">
+        <button class="menu-btn sec" id="confirm-no">Conservar</button>
+        <button class="menu-btn confirm-peligro" id="confirm-si">Romper</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+/* Fondo: el vídeo se reproduce una vez (sin bucle) y se queda en el último
+   frame. Se decidió dejarlo así: se ve completo y limpio.                  */
+const MODO_PRUEBA_FONDO = false;
+
+/* ============================================================
+   EL ALQUIMISTA DE VITRIOL — MOTOR
+   Audio (Web Audio), fondos canvas/GIF, SVG, estado de juego.
+   ============================================================ */
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TUS GIFS DE FONDO  ·  EDITA AQUÍ                          ║
+   ╠══════════════════════════════════════════════════════════╣
+   ║  Asocia cada "ambiente" a un GIF tuyo. Dos formas:         ║
+   ║                                                            ║
+   ║  A) MODO CARPETA (recomendado): pon el .gif junto al HTML  ║
+   ║     y escribe su nombre:                                   ║
+   ║        sotano: "fondo_sotano.gif"                          ║
+   ║                                                            ║
+   ║  B) MODO INCRUSTADO (archivo único): pega el base64:       ║
+   ║        sotano: "data:image/gif;base64,R0lGOD...."          ║
+   ║                                                            ║
+   ║  Deja "" (vacío) en los que no tengas: usará el fondo      ║
+   ║  animado de partículas como respaldo automático.          ║
+   ╚══════════════════════════════════════════════════════════╝ */
+// vídeos de fondo por escena (en carpeta media/). WebM/VP9, igual que los personajes.
+const VIDEO_FONDO = {
+  sotano: 'media/bg_sotano.webm?v=17',   // Acto I — laboratorio del gremio
+  corte:  'media/bg_corte.webm?v=17',    // Acto II/III — corte de Quimm
+  golem:  'media/bg_golem.webm?v=17',    // Acto II — fundición y gólem
+  ritual: 'media/bg_ritual.webm?v=17',   // final del Vitriolo
+  mazmorra: 'media/bg_mazmorra.webm?v=17', // Acto II — celda/mazmorra
+};
+/* ──────────────────────────────────────────────────────────── */
+
+const Estado = {
+  vidasMax: 5, vidas: 5, puntos: 0, aciertos: 0, intentos: 0,
+  escena: 'inicio', flags: {}, logros: {}, sonido: true, visto:{},
+  // ── ejes narrativos (se acumulan y deciden los finales) ──
+  sospecha: 0,    // cuánto desconfía la corte de ti (0 = invisible, alto = peligro)
+  sienna: 0,      // relación con Sienna (negativo = rival, positivo = aliada)
+  verdad: 0,      // cuánto sabes de la conspiración
+  pistas: [],     // inventario de pruebas/objetos recogidos
+  // ── seguimiento de aprendizaje (para el expediente y el codex) ──
+  conceptos: {},  // {idConcepto:{ok:n, fallo:n}} por tema de química
+  codexVisto: {}  // conceptos que han aparecido al menos una vez
+};
+// finales desbloqueados a lo largo de TODAS las partidas de la sesión
+const FinalesVistos = {};
+
+/* ---------- SVG decorativos ---------- */
+const SVG = {
+  sigilo(){return `<svg viewBox="0 0 200 200"><g fill="none" stroke="#e0b84a" stroke-width="0.8">
+    <circle cx="100" cy="100" r="95"/><circle cx="100" cy="100" r="78"/>
+    <polygon points="100,15 173,142 27,142"/><polygon points="100,185 27,58 173,58"/>
+    <circle cx="100" cy="100" r="40"/>
+    <circle cx="100" cy="22" r="5"/><circle cx="167" cy="139" r="5"/><circle cx="33" cy="139" r="5"/>
+    <path d="M70 100 a30 30 0 0 1 60 0" stroke="#5fd6a4"/><path d="M70 100 a30 30 0 0 0 60 0"/>
+    <text x="100" y="105" font-size="22" fill="#5fd6a4" text-anchor="middle" font-family="Cinzel">🜍</text>
+    </g></svg>`;},
+  vial(lleno){const c=lleno?'#e0593f':'#2a3a48';const g=lleno?'#5fd6a4':'#222';
+    return `<svg viewBox="0 0 24 32"><path d="M8 2 h8 v8 l4 12 a8 8 0 0 1-16 0 l4-12 z" fill="none" stroke="#e0b84a" stroke-width="1.4"/>
+    <path d="M9 14 l-2.5 7 a6 6 0 0 0 11 0 l-2.5-7 z" fill="${c}"/>
+    <ellipse cx="12" cy="21" rx="5.5" ry="2" fill="${g}" opacity="${lleno?'.8':'.3'}"/>
+    <rect x="7" y="1" width="10" height="3" rx="1" fill="#4aa3c9"/></svg>`;},
+  /* matraz de líquido: nivel 0..1, tipo 'vida'(rojo) o 'saber'(morado).
+     grietas = 0..4 según daño acumulado. id único para clipPath. */
+  frasco(nivel,tipo,grietas){
+    nivel=Math.max(0,Math.min(1,nivel));grietas=grietas||0;
+    const id=tipo+'_'+Math.random().toString(36).slice(2,7);
+    const liq = tipo==='vida'
+      ? {a:'#ff5a3c',b:'#b81e0e',glow:'#ff7a5c'}
+      : {a:'#9a6cf0',b:'#5e3ec0',glow:'#b9a4ff'};
+    // geometría del matraz (viewBox 0 0 44 56): cuello arriba, bulbo abajo
+    // el líquido llena el bulbo desde y=50 (vacío) hasta y=20 (lleno)
+    const yTop = 50 - nivel*30;            // altura de la superficie del líquido
+    const cuerpo = `M15 6 h14 v13 l8 20 a16 16 0 0 1 -30 0 l8 -20 z`;
+    // grietas (líneas que aparecen al perder vida)
+    const setG=[
+      'M18 30 l4 5 l-2 4','M30 26 l-3 6 l2 3','M14 38 l5 2','M32 40 l-4 3'
+    ];
+    let gr='';
+    for(let i=0;i<grietas && i<setG.length;i++)
+      gr+=`<path d="${setG[i]}" stroke="#1a0a08" stroke-width="1" fill="none" opacity=".7"/>`;
+    // burbujas dentro del líquido
+    const bub = nivel>0.05 ? `
+      <circle class="bub-l" cx="19" cy="44" r="1.4" fill="${liq.glow}" opacity=".7">
+        <animate attributeName="cy" values="46;${yTop+3}" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;.8;0" dur="2.4s" repeatCount="indefinite"/></circle>
+      <circle cx="26" cy="42" r="1" fill="${liq.glow}" opacity=".6">
+        <animate attributeName="cy" values="44;${yTop+4}" dur="3.1s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;.7;0" dur="3.1s" repeatCount="indefinite"/></circle>` : '';
+    return `<svg viewBox="0 0 44 56">
+      <defs>
+        <clipPath id="clip_${id}"><path d="${cuerpo}"/></clipPath>
+        <linearGradient id="grad_${id}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="${liq.a}"/><stop offset="1" stop-color="${liq.b}"/>
+        </linearGradient>
+      </defs>
+      <!-- líquido (clip al cuerpo) -->
+      <g clip-path="url(#clip_${id})">
+        <rect x="0" y="${yTop}" width="44" height="56" fill="url(#grad_${id})"/>
+        <!-- onda en la superficie -->
+        <path d="M0 ${yTop} q11 -3 22 0 t22 0 v6 h-44 z" fill="${liq.a}" opacity=".9">
+          <animate attributeName="d"
+            values="M0 ${yTop} q11 -3 22 0 t22 0 v6 h-44 z;M0 ${yTop} q11 3 22 0 t22 0 v6 h-44 z;M0 ${yTop} q11 -3 22 0 t22 0 v6 h-44 z"
+            dur="2.8s" repeatCount="indefinite"/></path>
+        ${bub}
+      </g>
+      <!-- brillo del cristal -->
+      <path d="${cuerpo}" fill="none" stroke="${liq.glow}" stroke-width="0.6" opacity=".25"/>
+      <!-- grietas -->
+      ${gr}
+      <!-- contorno del matraz -->
+      <path d="${cuerpo}" fill="none" stroke="#e0b84a" stroke-width="1.5"/>
+      <rect x="14" y="3" width="16" height="4" rx="1.5" fill="#cf8a45"/>
+      <ellipse cx="22" cy="6" rx="8" ry="1.6" fill="#e0b84a" opacity=".5"/>
+    </svg>`;
+  },
+  // figuras de personajes (siluetas alquímicas estilizadas)
+  figura(tipo){
+    const F={
+      alquimista:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="70" ry="14" fill="#000" opacity=".4"/>
+        <path d="M60 120 q40-25 80 0 l14 130 h-108 z" fill="#234a3a" stroke="#5fd6a4" stroke-width="1.5"/>
+        <path d="M70 130 l30 95 30-95" fill="none" stroke="#e0b84a" stroke-width="1.2" opacity=".6"/>
+        <circle cx="100" cy="78" r="34" fill="#16202b" stroke="#e0b84a" stroke-width="1.5"/>
+        <path d="M66 84 q34 40 68 0 l-4-30 q-30 22-60 0 z" fill="#2a3a48"/>
+        <circle cx="88" cy="74" r="3.5" fill="#5fd6a4"/><circle cx="112" cy="74" r="3.5" fill="#5fd6a4"/>
+        <path d="M82 95 q18 8 36 0" fill="none" stroke="#9c8a63" stroke-width="1.5"/>
+        <path d="M66 50 q34-30 68 0 l-8 14 q-26-18-52 0 z" fill="#1f2d3a" stroke="#e0b84a" stroke-width="1.3"/>
+        <circle cx="150" cy="150" r="12" fill="#16202b" stroke="#5fd6a4" stroke-width="1.5"/>
+        <path d="M150 138 v-10" stroke="#e0b84a" stroke-width="2"/></g></svg>`,
+      maestro:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="74" ry="14" fill="#000" opacity=".4"/>
+        <path d="M54 120 q46-30 92 0 l12 135 h-116 z" fill="#2a3340" stroke="#4aa3c9" stroke-width="1.5"/>
+        <circle cx="100" cy="74" r="36" fill="#16202b" stroke="#4aa3c9" stroke-width="1.5"/>
+        <path d="M64 80 l72 0 q-6-42-36-42 q-30 0-36 42z" fill="#1f2d3a"/>
+        <path d="M70 96 q30 30 60 0" fill="none" stroke="#9c8a63" stroke-width="6" stroke-linecap="round"/>
+        <path d="M88 70 l-10 4 m44-4 l10 4" stroke="#e0b84a" stroke-width="2"/>
+        <circle cx="88" cy="72" r="3" fill="#f7df93"/><circle cx="112" cy="72" r="3" fill="#f7df93"/>
+        <path d="M60 46 q40-34 80 0" fill="none" stroke="#e0b84a" stroke-width="3"/></g></svg>`,
+      espiritu:`<svg viewBox="0 0 200 280"><g opacity=".85">
+        <path d="M70 90 q30-50 60 0 q14 60 0 120 q-8 40-30 50 q-22-10-30-50 q-14-60 0-120z"
+          fill="rgba(95,214,164,.25)" stroke="#5fd6a4" stroke-width="1.5"/>
+        <circle cx="86" cy="110" r="4" fill="#5fd6a4"/><circle cx="114" cy="110" r="4" fill="#5fd6a4"/>
+        <path d="M82 130 q18 14 36 0" fill="none" stroke="#5fd6a4" stroke-width="1.5"/>
+        <path d="M70 200 q30 30 60 0" fill="none" stroke="#5fd6a4" stroke-width="1" opacity=".5"/></g></svg>`,
+      golem:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="80" ry="14" fill="#000" opacity=".4"/>
+        <rect x="46" y="120" width="108" height="135" rx="8" fill="#243240" stroke="#4aa3c9" stroke-width="2"/>
+        <rect x="62" y="60" width="76" height="66" rx="10" fill="#1f2d3a" stroke="#4aa3c9" stroke-width="2"/>
+        <rect x="74" y="80" width="20" height="10" fill="#e0593f"/><rect x="106" y="80" width="20" height="10" fill="#e0593f"/>
+        <path d="M74 105 h52" stroke="#5fd6a4" stroke-width="2"/>
+        <path d="M70 150 h60 M70 175 h60 M70 200 h60" stroke="#4aa3c9" stroke-width="1" opacity=".5"/>
+        <text x="100" y="145" font-size="20" fill="#5fd6a4" text-anchor="middle">🜔</text></g></svg>`,
+      sienna:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="68" ry="13" fill="#000" opacity=".4"/>
+        <path d="M62 122 q38-22 76 0 l12 133 h-100z" fill="#3d1d3a" stroke="#b56fb0" stroke-width="1.5"/>
+        <path d="M72 130 l28 95 28-95" fill="none" stroke="#e0a8db" stroke-width="1" opacity=".5"/>
+        <circle cx="100" cy="80" r="33" fill="#16202b" stroke="#b56fb0" stroke-width="1.5"/>
+        <path d="M67 80 q5-40 33-40 q28 0 33 40 q4 50-8 70 l-6-44 q-19 12-38 0 l-6 44 q-12-20-8-70z" fill="#2a1228"/>
+        <circle cx="89" cy="76" r="3.5" fill="#e0a8db"/><circle cx="111" cy="76" r="3.5" fill="#e0a8db"/>
+        <path d="M84 70 l-9-3 m41 3 l9-3" stroke="#b56fb0" stroke-width="1.5"/>
+        <path d="M85 94 q15 6 30 0" fill="none" stroke="#c98aa0" stroke-width="2"/>
+        <circle cx="100" cy="120" r="5" fill="none" stroke="#5fd6a4" stroke-width="1.5"/></g></svg>`,
+      cortesano:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="72" ry="13" fill="#000" opacity=".4"/>
+        <path d="M56 124 q44-24 88 0 l11 131 h-110z" fill="#13243f" stroke="#e0b84a" stroke-width="1.4"/>
+        <path d="M100 130 v125" stroke="#e0b84a" stroke-width="1" opacity=".5"/>
+        <circle cx="100" cy="78" r="32" fill="#16202b" stroke="#e0b84a" stroke-width="1.4"/>
+        <path d="M68 78 q32-30 64 0 l-6-26 q-26 16-52 0z" fill="#1f2d3a"/>
+        <path d="M88 76 l-8 2 m32-2 l8 2" stroke="#e0b84a" stroke-width="1.5"/>
+        <circle cx="89" cy="78" r="2.6" fill="#e0593f"/><circle cx="111" cy="78" r="2.6" fill="#e0593f"/>
+        <path d="M88 95 q12 4 24 0" fill="none" stroke="#9c8a63" stroke-width="2"/>
+        <path d="M78 100 l44 0 -6 16 -32 0z" fill="#5a1018" opacity=".7"/>
+        <circle cx="100" cy="140" r="6" fill="#e0b84a" opacity=".5"/></g></svg>`,
+      rey:`<svg viewBox="0 0 200 280"><g>
+        <ellipse cx="100" cy="265" rx="76" ry="14" fill="#000" opacity=".4"/>
+        <path d="M52 120 q48-28 96 0 l10 135 h-116z" fill="#5a1018" stroke="#e0b84a" stroke-width="1.5"/>
+        <circle cx="100" cy="76" r="34" fill="#16202b" stroke="#e0b84a" stroke-width="1.5"/>
+        <path d="M70 50 l8 16 8-20 14 22 14-22 8 20 8-16 -6 28h-58z" fill="#e0b84a"/>
+        <circle cx="88" cy="74" r="3" fill="#e0593f"/><circle cx="112" cy="74" r="3" fill="#e0593f"/>
+        <path d="M84 92 q16 6 32 0" fill="none" stroke="#9c8a63" stroke-width="5" stroke-linecap="round"/></g></svg>`
+    };
+    return F[tipo]||'';}
+};
+
+/* ---------- AUDIO (Web Audio API, sin ficheros) ---------- */
+const Audio2 = {
+  ctx:null, musicaOn:false, nodos:[], busSfx:null, busMusica:null,
+  volSfx:0.8, volMusica:0.7,
+  init(){ if(!this.ctx){ try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+    if(this.ctx && !this.busSfx){
+      this.busSfx=this.ctx.createGain(); this.busSfx.gain.value=this.volSfx; this.busSfx.connect(this.ctx.destination);
+      this.busMusica=this.ctx.createGain(); this.busMusica.gain.value=this.volMusica; this.busMusica.connect(this.ctx.destination);
+    }
+  },
+  setVolSfx(v){ this.volSfx=Math.max(0,Math.min(1,v)); if(this.busSfx)this.busSfx.gain.value=this.volSfx; },
+  setVolMusica(v){ this.volMusica=Math.max(0,Math.min(1,v)); if(this.busMusica)this.busMusica.gain.value=this.volMusica; },
+  _destSfx(){ return this.busSfx||this.ctx.destination; },
+  tono(freq,dur,tipo='sine',vol=.15,delay=0){
+    if(!Estado.sonido||!this.ctx)return;
+    const t=this.ctx.currentTime+delay;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=tipo; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(this._destSfx()); o.start(t); o.stop(t+dur);
+  },
+  click(){this.tono(330,.08,'triangle',.1);this.tono(495,.06,'triangle',.06,.04);},
+  hover(){this.tono(660,.04,'sine',.04);},
+  acierto(){[523,659,784,1047].forEach((f,i)=>this.tono(f,.25,'sine',.13,i*.07));},
+  error(){this.tono(180,.3,'sawtooth',.13);this.tono(120,.4,'sawtooth',.1,.05);},
+  muerte(){[300,260,220,160,110].forEach((f,i)=>this.tono(f,.5,'sawtooth',.12,i*.18));},
+  logro(){[659,784,988,1319].forEach((f,i)=>this.tono(f,.3,'triangle',.12,i*.09));},
+  pagina(){this.tono(800,.03,'sine',.04);},
+  // destello mágico mejorado: shimmer arcano de varias capas (para el círculo del menú)
+  magia(){
+    if(!Estado.sonido||!this.ctx)return;
+    const ctx=this.ctx, t=ctx.currentTime;
+    // reverb corto compartido para dar "aire" mágico
+    if(!this._magiaRev){
+      const len=ctx.sampleRate*1.2, buf=ctx.createBuffer(2,len,ctx.sampleRate);
+      for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);
+        for(let n=0;n<len;n++)d[n]=(Math.random()*2-1)*Math.pow(1-n/len,3);}
+      const cv=ctx.createConvolver();cv.buffer=buf;
+      const w=ctx.createGain();w.gain.value=.35;cv.connect(w);w.connect(this._destSfx());
+      this._magiaRev=cv;
+    }
+    const rev=this._magiaRev;
+    // 1) barrido etéreo ascendente con vibrato
+    const o=ctx.createOscillator(), g=ctx.createGain(), lfo=ctx.createOscillator(), lg=ctx.createGain();
+    o.type='triangle';
+    o.frequency.setValueAtTime(392,t);
+    o.frequency.exponentialRampToValueAtTime(1175,t+.4);
+    lfo.frequency.value=7;lg.gain.value=9;lfo.connect(lg);lg.connect(o.frequency);lfo.start(t);lfo.stop(t+.6);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.04);
+    g.gain.exponentialRampToValueAtTime(.0001,t+.55);
+    o.connect(g);g.connect(ctx.destination);g.connect(rev);o.start(t);o.stop(t+.6);
+    // 2) acorde shimmer (quinta + octava) que entra desfasado y cristalino
+    const acorde=[784,1175,1568,2350]; // G5, D6, G6, D7 aprox
+    acorde.forEach((f,i)=>{
+      const oo=ctx.createOscillator(), gg=ctx.createGain();
+      oo.type='sine';oo.frequency.value=f;
+      const d=t+i*.06;
+      gg.gain.setValueAtTime(0,d);gg.gain.linearRampToValueAtTime(.035,d+.03);
+      gg.gain.exponentialRampToValueAtTime(.0001,d+.5);
+      oo.connect(gg);gg.connect(ctx.destination);gg.connect(rev);oo.start(d);oo.stop(d+.55);
+    });
+    // 3) chispa de campana al final (toque "destello")
+    const cmp=ctx.createOscillator(), cg=ctx.createGain();
+    cmp.type='sine';cmp.frequency.setValueAtTime(2637,t+.18);
+    cg.gain.setValueAtTime(0,t+.18);cg.gain.linearRampToValueAtTime(.04,t+.2);
+    cg.gain.exponentialRampToValueAtTime(.0001,t+.7);
+    cmp.connect(cg);cg.connect(rev);cmp.start(t+.18);cmp.stop(t+.72);
+  },
+  // música ambiente: drone + arpegio modal misterioso
+  // Música ambiente evolutiva: progresión de acordes + melodía pentatónica con frases y silencios
+  musica(){
+    if(!this.ctx||!Estado.sonido)return; this.pararMusica(); this.musicaOn=true;
+    const ctx=this.ctx, dest=this.busMusica||ctx.destination;
+    // reverb sencilla por convolución (cola corta) para dar aire
+    const conv=ctx.createConvolver(); const len=ctx.sampleRate*1.8;
+    const buf=ctx.createBuffer(2,len,ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);
+      for(let n=0;n<len;n++)d[n]=(Math.random()*2-1)*Math.pow(1-n/len,2.5);}
+    conv.buffer=buf;
+    const wet=ctx.createGain();wet.gain.value=.25;conv.connect(wet);wet.connect(dest);
+    const master=ctx.createGain();master.gain.value=.9;master.connect(dest);master.connect(conv);
+    this.nodos.push(conv,wet,master);
+
+    // progresión de acordes (Em - C - G - D, en frecuencias bajas) → da movimiento armónico
+    const acordes=[
+      {raiz:82.41, notas:[164.81,196.00,246.94]},  // Em
+      {raiz:65.41, notas:[130.81,164.81,196.00]},  // C
+      {raiz:98.00, notas:[196.00,246.94,293.66]},  // G
+      {raiz:73.42, notas:[146.83,185.00,220.00]},  // D
+    ];
+    // escala pentatónica de Mi menor para la melodía (varias octavas)
+    const mel=[329.63,392.00,440.00,493.88,587.33,659.25,739.99,880.00];
+
+    // pad sostenido que cambia con cada acorde
+    const padOsc=[]; const padGain=ctx.createGain();padGain.gain.value=0;padGain.connect(master);
+    this.nodos.push(padGain);
+    const ponerPad=(ac)=>{
+      padOsc.forEach(o=>{try{o.stop()}catch(e){}});padOsc.length=0;
+      ac.notas.forEach(f=>{const o=ctx.createOscillator();o.type='triangle';o.frequency.value=f;
+        const g=ctx.createGain();g.gain.value=.012;o.connect(g);g.connect(padGain);o.start();padOsc.push(o);});
+    };
+    padGain.gain.setValueAtTime(0,ctx.currentTime);
+    padGain.gain.linearRampToValueAtTime(1,ctx.currentTime+4);
+    this._padOsc=padOsc;
+
+    // bajo lento (raíz del acorde)
+    let ac=0, beat=0;
+    const noteFreq=(f,dur,vol,tipo)=>{
+      if(!this.musicaOn||!Estado.sonido)return;
+      const t=ctx.currentTime, o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=tipo||'sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.06);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g);g.connect(master);g.connect(conv);o.start(t);o.stop(t+dur);
+    };
+
+    ponerPad(acordes[0]);
+    // patrón melódico con frases: a veces toca, a veces calla (más natural)
+    let idxMel=2, frase=0;
+    this.loop=setInterval(()=>{
+      if(!this.musicaOn||!Estado.sonido)return;
+      const acorde=acordes[ac%acordes.length];
+      // cambio de acorde cada 8 beats
+      if(beat%8===0){ ponerPad(acorde); noteFreq(acorde.raiz,3.4,.05,'sine'); }
+      // melodía: frases de 3-4 notas seguidas de silencio
+      const enFrase = (beat%8) < (4+(frase%2));
+      if(enFrase){
+        // camina por la pentatónica (sube/baja suave), no salta al azar
+        const paso=[-1,1,2,-2][Math.floor(Math.random()*4)];
+        idxMel=Math.max(0,Math.min(mel.length-1,idxMel+paso));
+        const dur=[.9,1.3,.6][Math.floor(Math.random()*3)];
+        noteFreq(mel[idxMel],dur+.4,.045,'triangle');
+      }
+      beat++;
+      if(beat%8===0){ac++;frase++;}
+    },820);
+  },
+  pararMusica(){this.musicaOn=false;if(this.loop)clearInterval(this.loop);
+    if(this._padOsc){this._padOsc.forEach(o=>{try{o.stop()}catch(e){}});this._padOsc=null;}
+    this.nodos.forEach(n=>{try{n.stop?n.stop():(n.disconnect&&n.disconnect());}catch(e){}});this.nodos=[];}
+};
+
+/* ---------- FONDO ANIMADO (canvas + GIF opcional) ---------- */
+const Fondo = {
+  cv:null,ctx:null,W:0,H:0,parts:[],modo:'humo',color:'#5fd6a4',raf:null,_loopWatch:null,_visBound:null,_lastTime:-1,
+  init(){
+    this.cv=document.getElementById('cv');this.ctx=this.cv.getContext('2d');
+    this.resize();window.addEventListener('resize',()=>this.resize());
+    this.crear();this.bucle();
+  },
+  resize(){const r=this.cv.getBoundingClientRect();this.W=this.cv.width=r.width;this.H=this.cv.height=r.height;},
+  /* modo  = tipo de partículas (humo/fuego/estrellas/burbujas)
+     color = tinte de partículas
+     key   = clave en VIDEO_FONDO; si existe, muestra ese vídeo de fondo */
+  set(modo,color,key){
+    this.modo=modo;this.color=color||this.color;this.crear();
+    this.setVideo(key);
+  },
+  setVideo(key){
+    const cont=document.getElementById('fondo');
+    let vidEl=document.getElementById('fondo-video');
+    const src = key && VIDEO_FONDO[key] ? VIDEO_FONDO[key] : "";
+    if(!cont) return;
+    if(!src){ if(vidEl)vidEl.classList.remove('activo'); this.cv.style.opacity=1; return; }
+
+    // cambiar de fondo sólo si la fuente es distinta
+    if(!vidEl || vidEl.dataset.src!==src){
+      const loop = MODO_PRUEBA_FONDO ? '' : 'loop';
+      // CREAR UN ELEMENTO NUEVO cada vez (igual que los personajes). Reutilizar
+      // el mismo <video> y hacer load() en file:// dejaba el vídeo congelado
+      // tras ~1s. Un elemento fresco lo evita y se reproduce entero.
+      // SIN bucle: se reproduce una vez y se queda en el último frame (decisión
+      // de diseño; así se ve completo y nítido sin el corte del loop en file://).
+      const nuevo=document.createElement('video');
+      nuevo.id='fondo-video';
+      nuevo.autoplay=true; nuevo.muted=true; nuevo.playsInline=true;
+      nuevo.loop=false;
+      nuevo.preload='auto';
+      nuevo.dataset.src=src;
+      nuevo.innerHTML=`<source src="${src}" type="video/webm">`;
+      // insertar el nuevo antes del canvas y quitar el viejo
+      if(vidEl){ vidEl.parentNode.replaceChild(nuevo, vidEl); }
+      else { cont.insertBefore(nuevo, cont.firstChild); }
+      vidEl=nuevo;
+      this._lastTime=-1;
+      const arrancar=()=>{ const p=vidEl.play(); if(p&&p.catch)p.catch(()=>{}); };
+      vidEl.addEventListener('loadeddata',arrancar,{once:true});
+      vidEl.addEventListener('canplay',arrancar,{once:true});
+      vidEl.load(); arrancar();
+    }
+    vidEl.classList.add('activo');
+    this.cv.style.opacity=.25;
+  },
+  crear(){
+    this.parts=[];const n=this.modo==='estrellas'?70:this.modo==='fuego'?60:45;
+    for(let i=0;i<n;i++)this.parts.push(this.nuevaP());
+  },
+  nuevaP(){
+    return {x:Math.random()*this.W,y:Math.random()*this.H,
+      r:Math.random()*3+1,vx:(Math.random()-.5)*.4,
+      vy:this.modo==='fuego'?-(Math.random()*1.5+.5):(Math.random()-.5)*.3,
+      a:Math.random()*.5+.1,vida:Math.random()*200+100,t:0};
+  },
+  bucle(){
+    this.ctx.clearRect(0,0,this.W,this.H);
+    const c=this.color;
+    this.parts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.t++;
+      if(this.modo==='humo'){p.vy-=.002;p.a-=.0008;}
+      if(this.modo==='fuego'){p.r*=.992;}
+      if(this.modo==='estrellas'){p.a=.3+Math.sin(p.t*.03+p.x)*.3;}
+      if(this.modo==='burbujas'){p.vy=-(Math.abs(p.vy)+.005);}
+      if(p.y< -10||p.y>this.H+10||p.a<=0||p.r<.3){Object.assign(p,this.nuevaP());if(this.modo!=='fuego')p.y=this.H+5;}
+      this.ctx.beginPath();
+      this.ctx.arc(p.x,p.y,Math.max(.3,p.r),0,7);
+      this.ctx.fillStyle=c+Math.floor(Math.max(0,Math.min(255,p.a*255))).toString(16).padStart(2,'0');
+      if(this.modo==='estrellas'){this.ctx.fillStyle=c;this.ctx.globalAlpha=p.a;}
+      this.ctx.fill();this.ctx.globalAlpha=1;
+    });
+    this.raf=requestAnimationFrame(()=>this.bucle());
+  }
+};
+
+/* ---------- UTILIDADES UI ---------- */
+const $=id=>document.getElementById(id);
+function _svgRedoma(){
+  return `<span class="redoma"><svg width="28" height="38" viewBox="0 0 30 40" aria-hidden="true">
+    <path class="vidrio" d="M11 4 L19 4 M12 4 L12 14 L5 30 Q3 36 9 36 L21 36 Q27 36 25 30 L18 14 L18 4"/>
+    <path class="esencia" d="M8.5 24 Q15 22 21.5 24 L24 30 Q25.6 34.5 21 34.5 L9 34.5 Q4.4 34.5 6 30 Z"/>
+    <circle class="esencia burbuja" cx="13" cy="29" r="1.1"/>
+    <circle class="esencia burbuja b2" cx="17" cy="31" r="0.8"/>
+    <path class="vapor" d="M13 3 q-2 -3 0 -6 M17 3 q2 -3 0 -6"/>
+  </svg></span>`;
+}
+function pintarVidas(){
+  const cont=$('redomas');
+  if(!cont)return;
+  cont.innerHTML='';
+  for(let i=0;i<Estado.vidasMax;i++){
+    cont.insertAdjacentHTML('beforeend',_svgRedoma());
+    if(i>=Estado.vidas)cont.lastElementChild.classList.add('vacia');
+  }
+}
+// animación de pérdida: la última redoma llena se tambalea antes de vaciarse
+function animarPerdidaVida(){
+  const cont=$('redomas');if(!cont)return;
+  const reds=[...cont.querySelectorAll('.redoma:not(.vacia)')];
+  const ultima=reds[reds.length-1];
+  if(ultima){ultima.classList.add('rompiendo');
+    setTimeout(()=>pintarVidas(),560);}
+  else pintarVidas();
+}
+// "Saber" eliminado de toda la interfaz. setPuntos sigue como contador interno
+// silencioso (no se muestra) por compatibilidad con las preguntas existentes.
+function setPuntos(n){ Estado.puntos=Math.max(0,n|0); }
+function tinte(col){$('tinte').style.background=col;}
+
+/* ---------- ESTADOS NARRATIVOS ---------- */
+function pintarEstados(){
+  // La barra de Sospecha ya no se muestra en el HUD (sigue afectando la historia).
+  const bs=$('b-sospecha');
+  if(bs){const sos=Math.max(0,Math.min(100,Estado.sospecha));bs.style.width=sos+'%';}
+  // La barra de Sienna solo se muestra una vez la conoces.
+  // Escala 0→100 directa: empieza baja (recién conocida) y sube con afinidad real.
+  const barraSienna=document.getElementById('barra-sienna-wrap');
+  if(barraSienna){
+    if(Estado.flags && Estado.flags.conoceSienna){
+      barraSienna.style.display='flex';
+      const si=Math.max(0,Math.min(100,Estado.sienna));
+      $('b-sienna').style.width=si+'%';
+    }else{
+      barraSienna.style.display='none';
+    }
+  }
+  pintarPistas();
+}
+function pintarPistas(){
+  const cont=$('pistas-lista');if(!cont)return;cont.innerHTML='';
+  if(Estado.pistas.length===0){
+    const v=document.createElement('span');v.style.cssText='color:var(--tinta-tenue);font-style:italic;font-size:11px';
+    v.textContent='—';cont.appendChild(v);return;
+  }
+  Estado.pistas.forEach(p=>{
+    const s=document.createElement('span');s.className='pista-chip';s.textContent=p.ico;
+    s.setAttribute('data-n',p.nombre);s.style.position='relative';cont.appendChild(s);
+  });
+}
+function ajustar(eje,n){
+  if(eje==='sospecha')Estado.sospecha=Math.max(0,Math.min(100,Estado.sospecha+n));
+  if(eje==='sienna')Estado.sienna=Math.max(-100,Math.min(100,Estado.sienna+n));
+  if(eje==='verdad')Estado.verdad=Math.max(0,Estado.verdad+n);
+  pintarEstados();guardar();
+}
+function darPista(id,ico,nombre){
+  if(Estado.pistas.some(p=>p.id===id))return;
+  Estado.pistas.push({id,ico,nombre});
+  pintarEstados();guardar();
+  // mini-aviso reutilizando el toast con otro tono
+  $('toast-nombre').textContent='Pista: '+nombre;
+  $('toast').querySelector('.t-ico').textContent='🔍';
+  $('toast').querySelector('.t-txt b').textContent='Nueva pista';
+  $('toast').classList.add('muestra');Audio2.pagina();
+  setTimeout(()=>{$('toast').classList.remove('muestra');
+    setTimeout(()=>{$('toast').querySelector('.t-ico').textContent='🏅';
+      $('toast').querySelector('.t-txt b').textContent='Logro obtenido';},600);},2800);
+}
+function tienePista(id){return Estado.pistas.some(p=>p.id===id);}
+
+/* ---------- SEGUIMIENTO DE APRENDIZAJE ---------- */
+function registrarConcepto(tema,acierto){
+  if(!Estado.conceptos[tema])Estado.conceptos[tema]={ok:0,fallo:0};
+  if(acierto)Estado.conceptos[tema].ok++; else Estado.conceptos[tema].fallo++;
+  Estado.codexVisto[tema]=true;
+  guardar();
+}
+
+/* ---------- LOGROS ---------- */
+function desbloquear(id){
+  if(Estado.logros[id])return;const l=LOGROS.find(x=>x.id===id);if(!l)return;
+  Estado.logros[id]=true;guardar();
+  $('toast-nombre').textContent=l.nombre;
+  $('toast').classList.add('muestra');Audio2.logro();
+  setTimeout(()=>$('toast').classList.remove('muestra'),3400);
+}
+function abrirLogros(){
+  const cont=$('lista-logros');cont.innerHTML='';
+  const total=LOGROS.length,hechos=LOGROS.filter(l=>Estado.logros[l.id]).length;
+  $('logros-sub').textContent=`Has descubierto ${hechos} de ${total} secretos del oficio.`;
+  LOGROS.forEach(l=>{
+    const ok=Estado.logros[l.id];
+    const d=document.createElement('div');
+    d.className='logro '+(ok?'desbloqueado':'bloq');
+    d.innerHTML=`<div class="logro-ico">${ok?l.ico:'🔒'}</div>
+      <div class="logro-txt"><b>${ok?l.nombre:'? ? ?'}</b><small>${ok?l.desc:'Logro por descubrir.'}</small></div>`;
+    cont.appendChild(d);
+  });
+  mostrar('logros-panel');
+}
+
+/* ---------- GUARDADO (en memoria — sin localStorage) ---------- */
+/* ════════ PREFERENCIAS (Opciones) — persistentes ════════ */
+const OPCIONES_KEY='alquimista_opciones';
+const Opciones={
+  volMusica:0.7, volSfx:0.8, velTexto:22, autoAvance:false, opacidadCaja:0.55,
+  cargar(){
+    try{ const r=localStorage.getItem(OPCIONES_KEY); if(r)Object.assign(this,JSON.parse(r)); }catch(e){}
+    Audio2.volMusica=this.volMusica; Audio2.volSfx=this.volSfx;
+    if(Audio2.busMusica)Audio2.busMusica.gain.value=this.volMusica;
+    if(Audio2.busSfx)Audio2.busSfx.gain.value=this.volSfx;
+    this.aplicarOpacidad();
+  },
+  aplicarOpacidad(){ document.documentElement.style.setProperty('--op-caja', this.opacidadCaja); },
+  guardar(){ try{ localStorage.setItem(OPCIONES_KEY,JSON.stringify(
+    {volMusica:this.volMusica,volSfx:this.volSfx,velTexto:this.velTexto,autoAvance:this.autoAvance,opacidadCaja:this.opacidadCaja})); }catch(e){} }
+};
+
+/* Sistema de grimorios: 3 ranuras persistentes en localStorage.
+   Compatibilidad: las funciones guardar()/cargar()/hayPartida() conservan su firma;
+   internamente operan sobre el grimorio activo (_slot). */
+const SAVE_PREFIX='alquimista_grimorio_';
+const NUM_SLOTS=3;
+let _slot=0;            // grimorio activo (0..2)
+let _save=null;         // snapshot del grimorio activo en memoria
+
+function _snapshot(){
+  return {vidas:Estado.vidas,puntos:Estado.puntos,aciertos:Estado.aciertos,
+    intentos:Estado.intentos,escena:Estado.escena,flags:{...Estado.flags},logros:{...Estado.logros},
+    sospecha:Estado.sospecha,sienna:Estado.sienna,verdad:Estado.verdad,pistas:[...Estado.pistas],
+    conceptos:JSON.parse(JSON.stringify(Estado.conceptos)),codexVisto:{...Estado.codexVisto},
+    _ts:Date.now()};
+}
+function _persistir(slot,data){
+  try{ if(data) localStorage.setItem(SAVE_PREFIX+slot,JSON.stringify(data));
+       else localStorage.removeItem(SAVE_PREFIX+slot); }catch(e){}
+}
+function leerSlot(slot){
+  try{ const raw=localStorage.getItem(SAVE_PREFIX+slot); return raw?JSON.parse(raw):null; }
+  catch(e){ return null; }
+}
+function slotOcupado(slot){ const d=leerSlot(slot); return !!(d && d.escena && d.escena!=='inicio'); }
+function fijarSlot(slot){ _slot=slot; _save=leerSlot(slot); }
+function borrarSlot(slot){ _persistir(slot,null); if(slot===_slot)_save=null; }
+
+// guardar() — graba el estado actual en el grimorio activo (memoria + disco)
+function guardar(){ _save=_snapshot(); _persistir(_slot,_save); }
+// hayPartida() — ¿el grimorio activo tiene una obra en curso?
+function hayPartida(){ return !!_save && _save.escena!=='inicio'; }
+// cargar() — restaura el grimorio activo al Estado
+function cargar(){ if(!_save)_save=leerSlot(_slot); if(!_save)return false;
+  Object.assign(Estado,JSON.parse(JSON.stringify(_save))); return true; }
+
+// metadatos para pintar cada ranura en la pantalla de selección
+function metaSlot(slot){
+  const d=leerSlot(slot);
+  if(!d || !d.escena || d.escena==='inicio') return {vacio:true};
+  const nLogros=d.logros?Object.values(d.logros).filter(Boolean).length:0;
+  return {vacio:false, vidas:d.vidas, logros:nLogros,
+    acto:_actoDeEscena(d.escena), ts:d._ts};
+}
+function _actoDeEscena(esc){
+  // heurística suave: si existe un mapa de actos lo usamos, si no, devolvemos 'I'
+  try{ if(typeof ACTO_DE_ESCENA==='object' && ACTO_DE_ESCENA[esc]) return ACTO_DE_ESCENA[esc]; }catch(e){}
+  return 'I';
+}
+
+/* ---------- PANTALLAS ---------- */
+function mostrar(id){['inicio','muerte','final','logros-panel','pistas-panel','grimorio-panel','galeria-panel','opciones-panel'].forEach(p=>$(p).classList.add('oculto'));
+  if(id)$(id).classList.remove('oculto');
+  const enJuego=!id;
+  $('hud').classList.toggle('oculto',!enJuego);
+  $('estados').classList.toggle('oculto',!enJuego);
+  $('escenario').style.visibility=enJuego?'visible':'hidden';
+  // reactivar la animación de entrada del menú de inicio
+  if(id==='inicio'){const ini=$('inicio');
+    // siempre volver a la vista de menú principal (no quedarse en grimorios)
+    const vm=$('vista-menu'),vg=$('vista-grimorios'),fd=$('inicio-fade');
+    if(vm)vm.classList.remove('oculto-vista');
+    if(vg)vg.classList.add('oculto-vista');
+    if(fd)fd.classList.remove('activo');
+    ini.classList.remove('entra');void ini.offsetWidth;ini.classList.add('entra');
+    requestAnimationFrame(()=>{ParticulasInicio.iniciar();});}
+  else{ParticulasInicio.parar();}
+}
+
+/* ---------- PANEL DE PISTAS (consultable) ---------- */
+let _volverDePanel=null;
+function abrirPistas(){
+  const cont=$('lista-pistas');cont.innerHTML='';
+  if(Estado.pistas.length===0){
+    cont.innerHTML='<div id="pistas-vacio">Aún no has descubierto nada. Investiga, habla, husmea donde no debes.</div>';
+  }else{
+    $('pistas-sub').textContent=`Has reunido ${Estado.pistas.length} pista${Estado.pistas.length>1?'s':''} sobre la conspiración.`;
+    Estado.pistas.forEach(p=>{
+      const d=document.createElement('div');d.className='pista-card';
+      d.innerHTML=`<div class="pc-ico">${p.ico}</div><div class="pc-txt">${p.nombre}</div>`;
+      cont.appendChild(d);
+    });
+  }
+  // recordar si estábamos en juego para volver al cerrar
+  _volverDePanel = (hayPartida() && Estado.escena!=='inicio' && Estado.vidas>0);
+  ['inicio','muerte','final','logros-panel'].forEach(p=>$(p).classList.add('oculto'));
+  $('pistas-panel').classList.remove('oculto');
+  $('hud').classList.add('oculto');$('estados').classList.add('oculto');
+  $('escenario').style.visibility='hidden';
+}
+
+function _abrirOverlay(panelId){
+  _volverDePanel = (hayPartida() && Estado.escena!=='inicio' && Estado.vidas>0);
+  ['inicio','muerte','final','logros-panel','pistas-panel','grimorio-panel','galeria-panel','opciones-panel'].forEach(p=>$(p).classList.add('oculto'));
+  $(panelId).classList.remove('oculto');
+  $('hud').classList.add('oculto');$('estados').classList.add('oculto');
+  $('escenario').style.visibility='hidden';
+}
+function _cerrarOverlay(){ if(_volverDePanel){mostrar(null);}else{mostrar('inicio');} }
+
+/* ---------- GRIMORIO (codex de química) ---------- */
+function abrirGrimorio(){
+  const cont=$('lista-grimorio');cont.innerHTML='';
+  const vistos=CODEX.filter(c=>Estado.codexVisto[c.id]).length;
+  $('grimorio-sub').innerHTML=`La química que todo alquimista debe dominar. Has encontrado <b style="color:var(--vitriolo)">${vistos} de ${CODEX.length}</b> conceptos en tu viaje.`;
+  CODEX.forEach(c=>{
+    const visto=!!Estado.codexVisto[c.id];
+    const card=document.createElement('div');
+    card.className='codex-card'+(visto?'':' nuevo');
+    card.innerHTML=`<div class="codex-head">
+        <span class="cx-ico">${c.ico}</span><b>${c.nombre}</b>
+        <span class="cx-estado ${visto?'est':'pend'}">${visto?'estudiado':'por ver'}</span>
+        <span class="cx-fl">▶</span></div>
+      <div class="codex-body">${c.texto}</div>`;
+    card.querySelector('.codex-head').onclick=()=>{Audio2.pagina();card.classList.toggle('abierto');};
+    cont.appendChild(card);
+  });
+  _abrirOverlay('grimorio-panel');
+}
+
+/* ---------- GALERÍA DE FINALES ---------- */
+function abrirGaleria(){
+  const cont=$('lista-galeria');cont.innerHTML='';
+  const ids=Object.keys(FINALES);
+  const vistos=ids.filter(id=>FinalesVistos[id]).length;
+  $('galeria-sub').innerHTML=`Cada decisión y cada acierto te lleva a un destino distinto. Has descubierto <b style="color:var(--vitriolo)">${vistos} de ${ids.length}</b>. ¿Te atreves a hallarlos todos?`;
+  ids.forEach(id=>{
+    const f=FINALES[id], visto=!!FinalesVistos[id];
+    const card=document.createElement('div');
+    card.className='final-card '+(visto?'visto':'bloq');
+    card.innerHTML=`<div class="fc-ico">${visto?f.ico:'🔒'}</div>
+      <div class="fc-txt"><b>${visto?f.titulo:'Destino por descubrir'}</b>
+      <small>${visto?f.tag:'Juega de otra forma para revelarlo.'}</small></div>`;
+    cont.appendChild(card);
+  });
+  _abrirOverlay('galeria-panel');
+}
+
+/* ---------- PARTÍCULAS DEL MENÚ DE INICIO ---------- */
+const ParticulasInicio={
+  cv:null,ctx:null,W:0,H:0,parts:[],raf:null,activo:false,
+  init(){
+    this.cv=document.getElementById('inicio-particulas');if(!this.cv)return;
+    this.ctx=this.cv.getContext('2d');
+    window.addEventListener('resize',()=>{this.resize();this.repartir();});
+  },
+  resize(){if(!this.cv)return;
+    // medir el #marco (contenedor raíz, siempre con tamaño real) y fijar el canvas a ese tamaño
+    const marco=document.getElementById('marco');
+    const r=marco.getBoundingClientRect();
+    const w=Math.round(r.width)||900, h=Math.round(r.height)||700;
+    this.W=this.cv.width=w;this.H=this.cv.height=h;
+    this.cv.style.width=w+'px';this.cv.style.height=h+'px';
+  },
+  crear(){
+    this.parts=[];const cols=['#e0b84a','#5fd6a4','#7c6cf0','#f7df93'];
+    for(let i=0;i<70;i++)this.parts.push({
+      x:Math.random()*this.W,y:Math.random()*this.H,
+      r:Math.random()*2.2+.6,vy:-(Math.random()*.35+.08),vx:(Math.random()-.5)*.25,
+      a:Math.random()*.5+.15,fase:Math.random()*6.28,vel:Math.random()*.04+.01,
+      col:cols[Math.floor(Math.random()*cols.length)]});
+  },
+  // redistribuir partículas existentes por toda la superficie (tras un resize)
+  repartir(){this.parts.forEach(p=>{p.x=Math.random()*this.W;p.y=Math.random()*this.H;});},
+  iniciar(){if(!this.cv)return;this.resize();this.crear();this.activo=true;if(!this.raf)this.bucle();},
+  parar(){this.activo=false;if(this.raf){cancelAnimationFrame(this.raf);this.raf=null;}},
+  bucle(){
+    if(!this.activo){this.raf=null;return;}
+    this.ctx.clearRect(0,0,this.W,this.H);
+    this.parts.forEach(p=>{
+      p.y+=p.vy;p.x+=p.vx;p.fase+=p.vel;
+      const brillo=p.a*(.55+.45*Math.sin(p.fase));
+      if(p.y<-8){p.y=this.H+8;p.x=Math.random()*this.W;}
+      if(p.x<-8)p.x=this.W+8;if(p.x>this.W+8)p.x=-8;
+      this.ctx.beginPath();this.ctx.arc(p.x,p.y,p.r,0,7);
+      this.ctx.fillStyle=p.col;this.ctx.globalAlpha=Math.max(0,Math.min(1,brillo));
+      this.ctx.shadowColor=p.col;this.ctx.shadowBlur=8;
+      this.ctx.fill();this.ctx.shadowBlur=0;this.ctx.globalAlpha=1;
+    });
+    this.raf=requestAnimationFrame(()=>this.bucle());
+  }
+};
+
+/* ---------- TÍTULO ANIMADO ---------- */
+function animarTitulo(){
+  /* En el estilo Hollow Knight el título no parpadea con "llamas".
+     El resplandor lo da el text-shadow del CSS. Dejamos esta función
+     como no-op por compatibilidad con llamadas existentes. */
+}
+
+/* ---------- INIT ---------- */
+function iniciarJuego(){
+  Fondo.init();
+  ParticulasInicio.init();
+  // círculo del menú: sigilo + dos anillos de brillo que recorren la forma
+  pintarVidas();
+
+  // ════ MENÚ DE INICIO estilo Hollow Knight ════
+  const _sonMenu={
+    comenzar:()=>{Audio2.init();Audio2.tono(330,.14,'triangle',.05);Audio2.tono(440,.12,'triangle',.03,.07);},
+    opciones:()=>{Audio2.init();Audio2.tono(294,.22,'sine',.04);},
+    logros:()=>{Audio2.init();[784,1047].forEach((f,i)=>Audio2.tono(f,.12,'sine',.04,i*.05));},
+    salir:()=>{Audio2.init();Audio2.tono(220,.2,'sawtooth',.035);}
+  };
+  const itemsMenu=[...document.querySelectorAll('#menu-hk .mi')];
+  let _idxMenu=0;
+  function selMenu(i){itemsMenu.forEach(m=>m.classList.remove('sel'));
+    _idxMenu=(i+itemsMenu.length)%itemsMenu.length;itemsMenu[_idxMenu].classList.add('sel');}
+  selMenu(0);
+  itemsMenu.forEach((m,i)=>{
+    m.addEventListener('mouseenter',()=>{selMenu(i);(_sonMenu[m.dataset.act]||(()=>{}))();});
+    m.addEventListener('click',()=>accionMenu(m.dataset.act));
+  });
+
+  function accionMenu(act){
+    Audio2.init();Audio2.click();
+    if(act==='comenzar'){ irAGrimorios(); }
+    else if(act==='logros'){ abrirLogros(); }
+    else if(act==='opciones'){ abrirOpciones(); }
+    else if(act==='salir'){ intentarSalir(); }
+  }
+
+  // navegación con teclado (flechas + enter), fiel a HK
+  document.addEventListener('keydown',e=>{
+    if($('inicio').classList.contains('oculto'))return;
+    if(!$('vista-grimorios').classList.contains('oculto-vista'))return;
+    if(e.key==='ArrowDown'){selMenu(_idxMenu+1);e.preventDefault();}
+    else if(e.key==='ArrowUp'){selMenu(_idxMenu-1);e.preventDefault();}
+    else if(e.key==='Enter'){accionMenu(itemsMenu[_idxMenu].dataset.act);}
+  });
+
+  $('grim-volver').onclick=()=>{Audio2.click();_resetBorrarTodo();volverAMenu();};
+  $('grim-borrar-todo').onclick=()=>{Audio2.init();borrarTodosGrimorios();};
+
+  // botones HUD/overlays que siguen existiendo
+  $('btn-snd').onclick=()=>{Estado.sonido=!Estado.sonido;
+    $('btn-snd').classList.toggle('silenciado',!Estado.sonido);
+    Estado.sonido?Audio2.musica():Audio2.pararMusica();};
+  $('btn-logros-hud').onclick=()=>{Audio2.click();abrirLogros();};
+  $('btn-opciones-hud').onclick=()=>{Audio2.click();abrirOpciones();};
+  $('btn-cerrar-opciones').onclick=()=>{Audio2.click();_cerrarOverlay();};
+  $('btn-pistas').onclick=()=>{Audio2.click();abrirPistas();};
+  $('btn-cerrar-pistas').onclick=()=>{Audio2.click();_cerrarOverlay();};
+  $('btn-grimorio').onclick=()=>{Audio2.click();abrirGrimorio();};
+  $('btn-cerrar-grimorio').onclick=()=>{Audio2.click();_cerrarOverlay();};
+  $('btn-final-galeria').onclick=()=>{Audio2.click();abrirGaleria();};
+  $('btn-cerrar-galeria').onclick=()=>{Audio2.click();_cerrarOverlay();};
+  $('btn-menu-hud').onclick=()=>{Audio2.click();guardar();mostrar('inicio');};
+  _wireOpciones();
+  // pantalla completa (Fullscreen API)
+  const toggleFS=()=>{Audio2.click();
+    const el=document.documentElement;
+    if(!document.fullscreenElement){
+      (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||(()=>{})).call(el).catch?.(()=>{});
+    }else{
+      (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||(()=>{})).call(document);
+    }
+  };
+  const fsBtn=$('btn-fullscreen');if(fsBtn)fsBtn.onclick=toggleFS;
+  document.addEventListener('fullscreenchange',()=>{
+    const enFS=!!document.fullscreenElement;
+    if(fsBtn)fsBtn.textContent=enFS?'⛶ Salir':'⛶ Pantalla';
+  });
+  $('btn-cerrar-logros').onclick=()=>{Audio2.click();
+    if(hayPartida()&&Estado.escena!=='inicio'&&Estado.vidas>0){mostrar(null);}else{mostrar('inicio');}};
+  $('btn-revivir').onclick=()=>{Audio2.click();revivir();};
+  $('btn-muerte-menu').onclick=()=>{Audio2.click();mostrar('inicio');};
+  $('btn-final-reiniciar').onclick=()=>{Audio2.click();empezarPartida(false);};
+  $('btn-final-logros').onclick=()=>{Audio2.click();abrirLogros();};
+  $('continuar').onclick=()=>avanzarTexto();
+  $('dialogo').onclick=()=>avanzarTexto();
+  document.addEventListener('keydown',e=>{
+    if(!$('inicio').classList.contains('oculto'))return; // en menú no
+    if(!$('escenario')||$('escenario').style.visibility==='hidden')return; // solo en juego
+    if((e.key===' '||e.key==='Enter')&&$('opciones').children.length===0)avanzarTexto();
+  });
+
+  Opciones.cargar();
+  mostrar('inicio');
+}
+
+/* ════════ NAVEGACIÓN DEL MENÚ (estilo Hollow Knight) ════════ */
+
+// transición menú principal → selección de grimorio (fundido + slots escalonados)
+function irAGrimorios(){
+  const fade=$('inicio-fade'),vMenu=$('vista-menu'),vGrim=$('vista-grimorios');
+  fade.classList.add('activo');
+  vMenu.classList.add('oculto-vista');
+  setTimeout(()=>{
+    pintarGrimorios();
+    fade.classList.remove('activo');
+    vGrim.classList.remove('oculto-vista');
+    const slots=[...document.querySelectorAll('#grim-slots .slot')];
+    slots.forEach(s=>s.classList.remove('in'));
+    slots.forEach((s,i)=>setTimeout(()=>s.classList.add('in'),140*i+120));
+  },480);
+}
+function volverAMenu(){
+  const vMenu=$('vista-menu'),vGrim=$('vista-grimorios');
+  vGrim.classList.add('oculto-vista');
+  setTimeout(()=>vMenu.classList.remove('oculto-vista'),260);
+}
+
+// pinta las 3 ranuras de guardado con sus metadatos
+function pintarGrimorios(){
+  if(typeof _resetBorrarTodo==='function')_resetBorrarTodo();
+  const cont=$('grim-slots');cont.innerHTML='';
+  const rom=['I','II','III','IV','V'];
+  for(let s=0;s<NUM_SLOTS;s++){
+    const m=metaSlot(s);
+    const div=document.createElement('div');
+    div.className='slot';
+    const flo=`<svg class="flo" viewBox="0 0 56 32" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2" fill="none"><path d="M6 23 q10 -17 25 -13 q13 4 19 -4"/><circle cx="6" cy="23" r="2.4" fill="currentColor" stroke="none"/></g></svg>`;
+    if(m.vacio){
+      div.innerHTML=flo+`<span class="num">${rom[s]}.</span>`+
+        `<div class="cuerpo"><span class="lbl">NUEVA OBRA</span></div>`;
+      div.onclick=()=>elegirGrimorio(s,false);
+    }else{
+      div.innerHTML=flo+`<span class="num">${rom[s]}.</span>`+
+        `<div class="cuerpo"><span class="lbl">ACTO ${m.acto}</span>`+
+        `<span class="meta">${m.vidas} Esencia · ${m.logros} logros</span></div>`+
+        `<span class="borrar" data-tip="Romper grimorio" aria-label="Romper grimorio">✕</span>`;
+      div.querySelector('.lbl').addEventListener('mouseenter',()=>{Audio2.init();Audio2.tono(392,.12,'sine',.04);});
+      div.onclick=(e)=>{ if(e.target.classList.contains('borrar'))return; elegirGrimorio(s,true); };
+      div.querySelector('.borrar').onclick=(e)=>{e.stopPropagation();confirmarBorrado(s);};
+    }
+    cont.appendChild(div);
+  }
+}
+
+function elegirGrimorio(slot,continuar){
+  Audio2.init();Audio2.click();Audio2.musica();
+  fijarSlot(slot);
+  empezarPartida(continuar && slotOcupado(slot));
+}
+
+// borra TODAS las partidas guardadas (modal de confirmación HK)
+function _resetBorrarTodo(){ /* compat: ya no hay estado de doble clic en el botón */ }
+function borrarTodosGrimorios(){
+  let hayAlguna=false;
+  for(let s=0;s<NUM_SLOTS;s++){ if(slotOcupado(s))hayAlguna=true; }
+  const b=$('grim-borrar-todo');
+  if(!hayAlguna){
+    if(b){b.textContent='No hay nada que romper';
+      setTimeout(()=>{if(b.textContent==='No hay nada que romper')b.textContent='Romper todos';},1800);}
+    return;
+  }
+  confirmarHK('Romper todos los grimorios',
+    'Todas las obras guardadas se perderán para siempre. ¿Continúas?',
+    ()=>{ for(let s=0;s<NUM_SLOTS;s++)borrarSlot(s);
+      pintarGrimorios();
+      document.querySelectorAll('#grim-slots .slot').forEach(s=>s.classList.add('in')); },
+    'Romper todo');
+}
+
+// modal de confirmación reutilizable, estética HK
+function confirmarHK(titulo, texto, onSi, etiquetaSi){
+  Audio2.init();Audio2.tono(180,.18,'sawtooth',.035);
+  const modal=$('confirm-modal');
+  $('confirm-titulo').textContent=titulo;
+  $('confirm-texto').textContent=texto;
+  $('confirm-si').textContent=etiquetaSi||'Romper';
+  modal.classList.remove('oculto','cerrando');
+  const cerrar=()=>{
+    modal.classList.add('cerrando');
+    setTimeout(()=>{modal.classList.add('oculto');modal.classList.remove('cerrando');},300);
+    $('confirm-si').onclick=null;$('confirm-no').onclick=null;
+  };
+  $('confirm-no').onclick=()=>{Audio2.click();cerrar();};
+  $('confirm-si').onclick=()=>{
+    Audio2.tono(140,.32,'sawtooth',.05);Audio2.tono(90,.38,'sawtooth',.04,.08);
+    cerrar(); if(onSi)onSi();
+  };
+}
+
+function confirmarBorrado(slot){
+  confirmarHK('Romper grimorio',
+    'Esta obra se perderá para siempre. ¿Continúas?',
+    ()=>{ borrarSlot(slot); pintarGrimorios();
+      document.querySelectorAll('#grim-slots .slot').forEach(s=>s.classList.add('in')); });
+}
+
+// "Opciones" — placeholder elegante hasta construir el panel real
+function abrirOpciones(){
+  Audio2.init();
+  // sincronizar controles con el estado actual
+  const vm=Math.round(Opciones.volMusica*100), vs=Math.round(Opciones.volSfx*100);
+  $('op-musica').value=vm; $('op-musica-val').textContent=vm;
+  $('op-sfx').value=vs; $('op-sfx-val').textContent=vs;
+  $('op-vel').value=Opciones.velTexto; $('op-vel-val').textContent=etiquetaVel(Opciones.velTexto);
+  const op=Math.round(Opciones.opacidadCaja*100);
+  $('op-opacidad').value=op; $('op-opacidad-val').textContent=op;
+  $('op-auto').setAttribute('aria-checked', Opciones.autoAvance?'true':'false');
+  _abrirOverlay('opciones-panel');
+}
+function etiquetaVel(v){
+  v=+v;
+  if(v<=0)return 'Instantáneo';
+  if(v<=10)return 'Muy rápido';
+  if(v<=20)return 'Rápido';
+  if(v<=30)return 'Normal';
+  if(v<=44)return 'Lento';
+  return 'Muy lento';
+}
+function _wireOpciones(){
+  const sm=$('op-musica'),ss=$('op-sfx'),sv=$('op-vel'),at=$('op-auto'),so=$('op-opacidad');
+  if(!sm)return;
+  sm.addEventListener('input',()=>{const v=+sm.value;$('op-musica-val').textContent=v;
+    Opciones.volMusica=v/100;Audio2.setVolMusica(v/100);Opciones.guardar();});
+  ss.addEventListener('input',()=>{const v=+ss.value;$('op-sfx-val').textContent=v;
+    Opciones.volSfx=v/100;Audio2.setVolSfx(v/100);Opciones.guardar();});
+  ss.addEventListener('change',()=>{Audio2.init();Audio2.click();}); // muestra el nivel al soltar
+  sv.addEventListener('input',()=>{const v=+sv.value;$('op-vel-val').textContent=etiquetaVel(v);
+    Opciones.velTexto=v;Opciones.guardar();});
+  if(so)so.addEventListener('input',()=>{const v=+so.value;$('op-opacidad-val').textContent=v;
+    Opciones.opacidadCaja=v/100;Opciones.aplicarOpacidad();Opciones.guardar();});
+  at.addEventListener('click',()=>{const on=at.getAttribute('aria-checked')!=='true';
+    at.setAttribute('aria-checked',on?'true':'false');Opciones.autoAvance=on;Opciones.guardar();
+    Audio2.init();Audio2.click();
+    if(on && _esperaTexto && !_typing) _quizaAutoAvanzar(true);});
+}
+
+// "Abandonar" — en navegador no se puede cerrar; mostramos despedida temática
+function intentarSalir(){
+  const c=$('creditos-inicio');
+  if(c){c.textContent='El laboratorio nunca cierra del todo… (cierra la pestaña para salir)';}
+}
+
+function empezarPartida(continuar){
+  if(continuar&&cargar()){ /* estado restaurado */ }
+  else{Estado.vidas=Estado.vidasMax;Estado.puntos=0;Estado.aciertos=0;Estado.intentos=0;Estado.flags={};
+    Estado.escena='prologo';Estado.sospecha=0;Estado.sienna=0;Estado.verdad=0;Estado.pistas=[];
+    Estado.conceptos={};Estado.codexVisto={};Estado.fallos=0;}
+  mostrar(null);pintarVidas();setPuntos(Estado.puntos);pintarEstados();
+  irA(Estado.escena);
+}
+
+/* ---------- MUERTE / VIDAS ---------- */
+function perderVida(n=1){
+  Estado.vidas=Math.max(0,Estado.vidas-n);
+  animarPerdidaVida();
+  // destello rojizo breve en pantalla al perder esencia
+  const marco=$('marco');
+  if(marco)marco.animate([{filter:'brightness(1)'},{filter:'brightness(1.15) saturate(.7)'},{filter:'brightness(1)'}],{duration:280});
+  if(Estado.vidas<=0)setTimeout(()=>morir(),580);
+}
+function ganarVida(n=1){Estado.vidas=Math.min(Estado.vidasMax,Estado.vidas+n);pintarVidas();}
+function morir(){
+  Audio2.muerte();
+  const m=MENSAJES_MUERTE[Math.floor(Math.random()*MENSAJES_MUERTE.length)];
+  $('muerte-msg').textContent=m;
+  $('muerte-sub').textContent=`Pruebas superadas: ${Estado.aciertos}`;
+  desbloquear('primera_muerte');
+  if(Estado.aciertos===0)desbloquear('inutil');
+  mostrar('muerte');
+}
+function revivir(){
+  Estado.vidas=Math.max(2,Math.ceil(Estado.vidasMax/2));pintarVidas();
+  mostrar(null);irA(Estado._escenaActual||'prologo');
+}
+
+/* ---------- TRANSMUTACIÓN FX ---------- */
+function flash(){const f=$('flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');}
+
+/* ============================================================
+   RUNTIME DE ESCENAS  (se carga antes que historia.js define ESCENAS)
+   Una "escena" es un array de pasos. Tipos de paso:
+     {di:"texto", quien:"Nombre", tag:"(susurrando)", fig:"alquimista", fondo:["humo","#7fbf4d"], cap:"Capítulo I"}
+     {pregunta:"...", opciones:[{txt,ok,fb,puntos,vidas,va,set,unlock}], premio:..., castigo:...}
+     {elige:"...", opciones:[{txt,va,set,unlock,fb}]}   // decisión narrativa (sin acierto/error)
+     {accion:fn}  // ejecuta lógica
+     {final:"id"} // termina en un final
+   ============================================================ */
+
+let _cola=[], _paso=0, _typing=null, _escActual=null, _autoTimer=null;
+
+function irA(nombre){
+  const esc=ESCENAS[nombre];
+  if(!esc){console.warn('Escena no existe:',nombre);return;}
+  Estado.escena=nombre; Estado._escenaActual=nombre; _escActual=nombre;
+  _cola=esc; _paso=0;
+  Estado.visto[nombre]=true; guardar();
+  ejecutarPaso();
+}
+
+function limpiarOpciones(){if(_autoTimer){clearTimeout(_autoTimer);_autoTimer=null;}const o=$('opciones');o.innerHTML='';o.classList.remove('impar');$('feedback').className='';$('feedback').style.display='none';}
+
+function ejecutarPaso(){
+  limpiarOpciones();
+  if(_paso>=_cola.length){return;}
+  const p=_cola[_paso];
+
+  // transición de acto: si el capítulo cambia, mostrar pantalla de cambio de escena
+  if(p.cap && p.cap!==_capActual){
+    _capActual=p.cap;
+    const capEl=$('capitulo'); if(capEl)capEl.textContent=p.cap;
+    return transicionActo(p.cap, ()=>{ continuarPaso(p); }, ()=>{
+      // mientras la pantalla negra cubre todo, ya cargamos el fondo/tinte del
+      // nuevo acto, así al levantarse no se ve el fondo anterior asomando
+      if(p.fondo)Fondo.set(p.fondo[0],p.fondo[1],p.fondo[2]);
+      if(p.tinte!==undefined)tinte(p.tinte);
+    });
+  }
+  if(p.cap){const capEl=$('capitulo'); if(capEl)capEl.textContent=p.cap;}
+  continuarPaso(p);
+}
+
+function continuarPaso(p){
+  // efectos de escena
+  if(p.fondo)Fondo.set(p.fondo[0],p.fondo[1],p.fondo[2]);
+  if(p.tinte!==undefined)tinte(p.tinte);
+  if(p.fig!==undefined){_figuraActiva=!!p.fig;setFigura(p.fig);}
+
+  if(p.accion){p.accion();_paso++;return ejecutarPaso();}
+  if(p.set){Object.assign(Estado.flags,p.set);}
+  if(p.unlock){desbloquear(p.unlock);}
+  if(p.efecto){for(const k in p.efecto)ajustar(k,p.efecto[k]);}
+  if(p.pista){darPista(p.pista[0],p.pista[1],p.pista[2]);}
+
+  if(p.di!==undefined){ mostrarDialogo(p); return; }
+  if(p.pregunta){ mostrarPregunta(p); return; }
+  if(p.elige){ mostrarEleccion(p); return; }
+  if(p.final){ irFinal(p.final); return; }
+  _paso++; ejecutarPaso();
+}
+
+let _capActual='';
+// muestra la pantalla de transición de acto y ejecuta el callback al terminar
+function transicionActo(titulo, cb, prep){
+  const t=$('transicion');
+  // separar "Acto X" del subtítulo si viene como "Acto II · La corte"
+  let main=titulo, sub='';
+  const sep=titulo.split('·');
+  if(sep.length>1){main=sep[0].trim();sub=sep.slice(1).join('·').trim();}
+  $('trans-titulo').textContent=sub||main;
+  $('trans-sub').innerHTML=sub?`<span class="trans-linea"></span>${main}<span class="trans-linea"></span>`:'';
+  if(!$('trans-sigilo').innerHTML)$('trans-sigilo').innerHTML=SVG.sigilo();
+  // ocultar la escena de inmediato (sin fundido) para que NO se vea el fondo
+  // del acto anterior asomando bajo la pantalla de transición
+  const esc=$('escenario');
+  const transPrev=esc.style.transition;
+  esc.style.transition='none';
+  esc.style.opacity='0';
+  t.classList.add('visible');
+  Audio2.magia&&Audio2.magia();
+  // con la pantalla negra ya cubriendo, preparamos el fondo del nuevo acto
+  if(prep){ try{ prep(); }catch(e){} }
+  // restaurar la transición del escenario para el fundido de salida
+  requestAnimationFrame(()=>{ esc.style.transition=transPrev||'opacity .6s ease'; });
+  setTimeout(()=>{
+    t.classList.remove('visible');
+    setTimeout(()=>{ esc.style.opacity='1'; cb(); }, 600);
+  }, 2100);
+}
+
+// mapa de personajes con vídeo (en carpeta media/). Si falta, usa el SVG.
+const MEDIA_VER='?v=15';
+const VIDEO_FIGURA={
+  alquimista:'media/p_alquimista.webm'+MEDIA_VER,
+  maestro:'media/p_maestro.webm'+MEDIA_VER,
+  sienna:'media/p_sienna.webm'+MEDIA_VER,
+  cortesano:'media/p_cortesano.webm'+MEDIA_VER,
+  golem:'media/p_golem.webm'+MEDIA_VER,
+  rey:'media/p_rey.webm'+MEDIA_VER
+};
+// nombre legible de cada tipo de personaje (para las placas)
+const NOMBRE_FIG={
+  alquimista:'Tú, el Alquimista', maestro:'Maestro Cínabro', sienna:'Sienna',
+  cortesano:'Canciller Galio', golem:'Gólem de Plomo', rey:'Rey Cuprio III'
+};
+
+// dibuja un personaje en un slot (izq/der)
+function pintarSlot(slotId,tipo){
+  const f=$(slotId);
+  if(!tipo){f.classList.remove('presente','activo','inactivo','solo');f.innerHTML='';f.dataset.tipo='';return;}
+  if(f.dataset.tipo===tipo){return;} // ya está ese personaje, no recargar
+  f.dataset.tipo=tipo;
+  const vid=VIDEO_FIGURA[tipo];
+  if(vid){
+    f.innerHTML=`<video autoplay loop muted playsinline preload="auto"><source src="${vid}" type="video/webm"></video>`;
+    const v=f.querySelector('video');
+    v.addEventListener('error',()=>{f.innerHTML=SVG.figura(tipo);});
+  }else{
+    f.innerHTML=SVG.figura(tipo);
+  }
+  f.classList.add('presente');
+}
+
+let _interlocutor=null;
+const PROTA='alquimista';
+
+function tipoDeQuien(quien){
+  if(!quien)return null;
+  const q=quien.toLowerCase();
+  if(q.includes('cínabro')||q.includes('cinabro')||q.includes('maestro'))return 'maestro';
+  if(q.includes('sienna'))return 'sienna';
+  if(q.includes('galio')||q.includes('canciller')||q.includes('cortesano'))return 'cortesano';
+  if(q.includes('gólem')||q.includes('golem'))return 'golem';
+  if(q.includes('rey')||q.includes('cuprio'))return 'rey';
+  if(q.includes('tú')||q.includes('alquimista')||q.includes('aprendiz'))return 'alquimista';
+  return null;
+}
+
+/* p.fig define el INTERLOCUTOR. El protagonista aparece a la izquierda. */
+function setFigura(tipo){
+  if(!tipo){
+    _interlocutor=null;
+    pintarSlot('figura-izq',null);pintarSlot('figura-der',null);
+    return;
+  }
+  _interlocutor=tipo;
+  if(tipo===PROTA){
+    pintarSlot('figura-izq',PROTA);pintarSlot('figura-der',null);
+    $('figura-izq').classList.add('solo');
+  }else{
+    $('figura-izq').classList.remove('solo');
+    pintarSlot('figura-izq',PROTA);
+    pintarSlot('figura-der',tipo);
+  }
+}
+
+// resalta al que habla; ilumina/atenúa al personaje correspondiente
+function resaltarHablante(quien){
+  const izq=$('figura-izq'), der=$('figura-der');
+  const tipoHabla=tipoDeQuien(quien);
+  const hayDos = izq.classList.contains('presente') && der.classList.contains('presente');
+  if(!hayDos){
+    izq.classList.remove('inactivo');izq.classList.add('activo');
+    return;
+  }
+  const hablaProta = tipoHabla===PROTA || !tipoHabla;
+  izq.classList.toggle('activo',hablaProta);izq.classList.toggle('inactivo',!hablaProta);
+  der.classList.toggle('activo',!hablaProta);der.classList.toggle('inactivo',hablaProta);
+}
+// (las placas de nombre ahora las gestionan setFigura/resaltarHablante por slot)
+let _figuraActiva=false;
+function setPlaca(nombre){/* obsoleto: reemplazado por placas por slot */}
+
+// nombre a mostrar en la ventana de diálogo
+function nombreHablante(p){
+  if(p.quien)return p.quien;
+  // sin "quien": si hay un interlocutor en escena, habla el protagonista (Tú)
+  if(_interlocutor && _interlocutor!==PROTA)return 'Tú';
+  // si la figura activa es el propio alquimista, también eres tú
+  if(_interlocutor===PROTA)return 'Tú';
+  return '';  // narración pura
+}
+
+/* ---- DIÁLOGO con efecto máquina de escribir ---- */
+function mostrarDialogo(p){
+  const nom=nombreHablante(p);
+  resaltarHablante(p.quien||nom);
+  $('hablante').innerHTML=(nom?`<b>${nom}</b>`:'')+(p.tag?` <span class="tag">${p.tag}</span>`:'');
+  // animación de entrada de la ventana de diálogo
+  const dlg=$('dialogo');
+  dlg.classList.remove('aparece'); void dlg.offsetWidth; dlg.classList.add('aparece');
+  // efectos de emoción sobre el personaje que habla (p.emo: 'enfado','grito','sorpresa','miedo')
+  if(p.emo) emocionPersonaje(p.quien||nom, p.emo);
+  const txt=p.di;
+  $('continuar').style.display='none';
+  let i=0;$('texto').innerHTML='';
+  if(_typing)clearInterval(_typing);
+  const plano=txt;
+  const vel=Opciones.velTexto; // ms por carácter (menor = más rápido)
+  if(vel<=0){ // instantáneo
+    $('texto').innerHTML=plano;$('continuar').style.display='block';
+    _esperaTexto=true;_textoCompleto=plano;_quizaAutoAvanzar(true);return;
+  }
+  _typing=setInterval(()=>{
+    i++;
+    $('texto').textContent=plano.slice(0,i);
+    if(i%5===0)Audio2.pagina();
+    if(i>=plano.length){clearInterval(_typing);_typing=null;$('texto').innerHTML=plano;$('continuar').style.display='block';_quizaAutoAvanzar(true);}
+  },vel);
+  _esperaTexto=true;_textoCompleto=plano;
+}
+
+/* efectos visuales de emoción sobre el personaje que habla.
+   Uso en una escena: {quien:'Maestro Cínabro', emo:'enfado', di:'¡...!'} */
+function emocionPersonaje(quien, emo){
+  const tipo=tipoDeQuien(quien);
+  if(!tipo)return;
+  // localizar el slot donde está ese personaje
+  let slot=null;
+  ['figura-izq','figura-der'].forEach(id=>{ const f=$(id); if(f && f.dataset.tipo===tipo)slot=f; });
+  if(!slot)return;
+  const colores={enfado:'#e0593f',grito:'#f7b733',sorpresa:'#7cf8c4',miedo:'#7c6cf0'};
+  const col=colores[emo]||'#e0593f';
+  // sacudida / escala según la emoción
+  slot.classList.remove('sacude','grito');
+  void slot.offsetWidth;
+  if(emo==='grito'||emo==='sorpresa'){ slot.classList.add('grito'); }
+  else { slot.classList.add('sacude'); }
+  // destello de color superpuesto
+  let flash=slot.querySelector('.fig-flash');
+  if(!flash){ flash=document.createElement('div'); flash.className='fig-flash'; slot.appendChild(flash); }
+  flash.style.background=`radial-gradient(ellipse at center, ${col}, transparent 70%)`;
+  flash.classList.remove('activo'); void flash.offsetWidth; flash.classList.add('activo');
+  // sonido acorde
+  if(emo==='enfado'){Audio2.tono(120,.25,'sawtooth',.06);Audio2.tono(90,.3,'sawtooth',.05,.05);}
+  else if(emo==='grito'){Audio2.tono(440,.18,'square',.05);Audio2.tono(660,.14,'square',.03,.06);}
+  else if(emo==='sorpresa'){Audio2.tono(880,.12,'sine',.05);}
+  else if(emo==='miedo'){Audio2.tono(200,.4,'sine',.04);}
+  // limpiar clases al terminar
+  setTimeout(()=>{slot.classList.remove('sacude','grito');},600);
+}
+let _esperaTexto=false,_textoCompleto='';
+// si el auto-avance está activo y no hay opciones que elegir, avanza solo tras una pausa
+function _quizaAutoAvanzar(soloSiSinOpciones){
+  if(_autoTimer){clearTimeout(_autoTimer);_autoTimer=null;}
+  if(!Opciones.autoAvance)return;
+  if(soloSiSinOpciones && $('opciones').children.length>0)return;
+  const ms=900+_textoCompleto.length*14; // pausa proporcional a la longitud
+  _autoTimer=setTimeout(()=>{ _autoTimer=null; if(_esperaTexto && $('opciones').children.length===0) avanzarTexto(); },ms);
+}
+function avanzarTexto(){
+  if($('opciones').children.length>0)return;
+  if(_autoTimer){clearTimeout(_autoTimer);_autoTimer=null;}
+  if(_typing){clearInterval(_typing);_typing=null;$('texto').innerHTML=_textoCompleto;$('continuar').style.display='block';return;}
+  if(!_esperaTexto)return;
+  Audio2.pagina();
+  _paso++; ejecutarPaso();
+}
+
+/* ---- PREGUNTA DE QUÍMICA integrada en la situación ----
+   p.intro: texto que enmarca para qué sirve resolver esto (la situación)
+   op.efecto / op.pista: consecuencias narrativas de cada opción
+   p.vaSi / p.vaNo: a dónde ir si se acierta / falla (ramas reales)
+   op.va: override por opción                                        */
+function mostrarPregunta(p){
+  if(p.tema){Estado.codexVisto[p.tema]=true;}
+  resaltarHablante(p.quien||'');
+  $('hablante').innerHTML=p.quien?`${p.quien} <span class="tag">${p.tag||'(la situación te exige actuar)'}</span>`:'<span class="tag">La situación te exige actuar</span>';
+  const intro=p.intro?`<div style="color:var(--tinta-tenue);font-style:italic;margin-bottom:8px;font-size:16px">${p.intro}</div>`:'';
+  $('texto').innerHTML=intro+p.pregunta;$('continuar').style.display='none';
+  const cont=$('opciones');
+  p.opciones.forEach((op)=>{
+    const b=document.createElement('button');b.className='opcion';b.innerHTML='<span class="op-txt">'+op.txt+'</span>';
+    b.onmouseenter=()=>Audio2.hover();
+    b.onclick=()=>{
+      Estado.intentos++;
+      [...cont.children].forEach(c=>c.disabled=true);
+      const fb=$('feedback');
+      if(op.ok){
+        Audio2.acierto();flash();b.classList.add('correcta-fx');
+        Estado.aciertos++;setPuntos(Estado.puntos+(op.puntos||100));
+        if(p.tema)registrarConcepto(p.tema,true);
+        if(op.vidas)ganarVida(op.vidas);
+        if(Estado.aciertos===1)desbloquear('primer_acierto');
+        if(Estado.aciertos>=5)desbloquear('cinco_aciertos');
+        if(Estado.aciertos>=10)desbloquear('diez_aciertos');
+        if(Estado.intentos>0&&Estado.aciertos===Estado.intentos&&Estado.aciertos>=3)desbloquear('sin_fallos');
+        fb.className='ok';fb.innerHTML=`<b>✓ ${op.head||'Acierto.'}</b> ${op.fb||''}`;
+      }else{
+        Audio2.error();b.classList.add('error-fx');
+        if(p.tema)registrarConcepto(p.tema,false);
+        perderVida(op.vidas||1);
+        desbloquear('primer_fallo');
+        Estado.fallos=(Estado.fallos||0)+1;
+        if(Estado.fallos>=3)desbloquear('manazas');
+        fb.className='mal';fb.innerHTML=`<b>✗ ${op.head||'Error.'}</b> ${op.fb||''}`;
+        if(Estado.vidas<=0)return; // morir() ya disparado
+      }
+      if(op.set)Object.assign(Estado.flags,op.set);
+      if(op.unlock)desbloquear(op.unlock);
+      if(op.efecto)for(const k in op.efecto)ajustar(k,op.efecto[k]);
+      if(op.pista)darPista(op.pista[0],op.pista[1],op.pista[2]);
+      guardar();
+      if(Estado.vidas<=0)return; // morir() ya gestiona la pantalla
+      // avance automático: el feedback se lee y la historia sigue sola
+      const destino=op.va || (op.ok?p.vaSi:p.vaNo) || p.va || '__sig';
+      const ir=()=>{ if(destino==='__sig'){_paso++;ejecutarPaso();} else irA(destino); };
+      // barra de progreso sutil en lugar de botón (no desplaza la interfaz)
+      const prog=document.createElement('div');
+      prog.className='auto-prog';prog.innerHTML='<i></i>';cont.appendChild(prog);
+      const espera=op.ok?850:1400; // breve si aciertas, algo más si fallas para leer la corrección
+      const barra=prog.querySelector('i');
+      barra.style.width='0%';
+      // forzar que el navegador "asiente" el ancho 0 antes de animar a 100%,
+      // si no, a veces aplica ambos en el mismo frame y la barra salta sin animar
+      void barra.offsetWidth;
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+        barra.style.transition=`width ${espera}ms linear`;
+        barra.style.width='100%';
+      }); });
+      let saltado=false;
+      const lanzar=()=>{if(saltado)return;saltado=true;cont.removeEventListener('click',saltar);document.removeEventListener('keydown',saltarTecla);ir();};
+      const saltar=(e)=>{e.stopPropagation();lanzar();};
+      const saltarTecla=(e)=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();lanzar();}};
+      // permitir adelantar tocando/espaciando, pero sin botón que ocupe sitio
+      setTimeout(()=>{cont.addEventListener('click',saltar);document.addEventListener('keydown',saltarTecla);},400);
+      _autoTimer=setTimeout(lanzar,espera);
+    };
+    cont.appendChild(b);
+  });
+  cont.classList.toggle('impar', p.opciones.length % 2 === 1);
+}
+function siguienteDefault(){return '__sig';}
+
+/* ---- ELECCIÓN NARRATIVA (sin bien/mal) ---- */
+function mostrarEleccion(p){
+  setPlaca('');
+  $('hablante').innerHTML='<span class="tag">Tu decisión</span>';
+  $('texto').innerHTML=p.elige;$('continuar').style.display='none';
+  const cont=$('opciones');
+  p.opciones.forEach(op=>{
+    const b=document.createElement('button');b.className='opcion';b.innerHTML='<span class="op-txt">'+op.txt+'</span>';
+    b.onmouseenter=()=>Audio2.hover();
+    b.onclick=()=>{
+      Audio2.click();
+      if(op.set)Object.assign(Estado.flags,op.set);
+      if(op.unlock)desbloquear(op.unlock);
+      if(op.puntos)setPuntos(Estado.puntos+op.puntos);
+      if(op.efecto)for(const k in op.efecto)ajustar(k,op.efecto[k]);
+      if(op.pista)darPista(op.pista[0],op.pista[1],op.pista[2]);
+      guardar();
+      const irE=()=>{ op.va==='__sig'?(_paso++,ejecutarPaso()):irA(op.va); };
+      if(op.fb){
+        [...cont.children].forEach(c=>c.disabled=true);
+        const fb=$('feedback');fb.className='ok';fb.innerHTML=op.fb;
+        const prog=document.createElement('div');prog.className='auto-prog';prog.innerHTML='<i></i>';cont.appendChild(prog);
+        const esperaE=1100;
+        const barraE=prog.querySelector('i');barraE.style.width='0%';void barraE.offsetWidth;
+        requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+          barraE.style.transition=`width ${esperaE}ms linear`;barraE.style.width='100%';
+        }); });
+        let saltado=false;
+        const lanzar=()=>{if(saltado)return;saltado=true;cont.removeEventListener('click',saltar);document.removeEventListener('keydown',saltarTecla);irE();};
+        const saltar=(e)=>{e.stopPropagation();lanzar();};
+        const saltarTecla=(e)=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();lanzar();}};
+        setTimeout(()=>{cont.addEventListener('click',saltar);document.addEventListener('keydown',saltarTecla);},400);
+        _autoTimer=setTimeout(lanzar,esperaE);
+      }else{ irE(); }
+    };
+    cont.appendChild(b);
+  });
+  cont.classList.toggle('impar', p.opciones.length % 2 === 1);
+}
+
+/* ---- FINALES ---- */
+function irFinal(id){
+  const f=FINALES[id]||FINALES.neutro;
+  Audio2.pararMusica();
+  if(f.bueno){[523,659,784,1047,1319].forEach((fr,i)=>Audio2.tono(fr,.4,'sine',.12,i*.12));}
+  else Audio2.muerte();
+  // registrar este final como descubierto (persiste en la sesión)
+  const claveFinal=Object.keys(FINALES).find(k=>FINALES[k]===f)||id;
+  FinalesVistos[claveFinal]=true;
+  $('final-icono').textContent=f.ico;
+  $('final-titulo').textContent=f.titulo;
+  $('final-tag').textContent=f.tag;
+  $('final-msg').textContent=f.msg;
+  $('fs-vidas').textContent=Estado.vidas;
+  $('fs-aciertos').textContent=Estado.aciertos;
+  const prec=Estado.intentos>0?Math.round(Estado.aciertos/Estado.intentos*100):0;
+  $('fs-precision').textContent=prec+'%';
+  construirExpediente();
+  if(f.unlock)desbloquear(f.unlock);
+  desbloquear('primer_final');
+  // logro por descubrir todos los finales
+  if(Object.keys(FINALES).every(k=>FinalesVistos[k]))desbloquear('todos_finales');
+  mostrar('final');
+}
+
+/* informe de aprendizaje: dominio por materia + rutas */
+function construirExpediente(){
+  const cont=$('exp-lista');cont.innerHTML='';
+  const temas=Object.keys(Estado.conceptos);
+  if(temas.length===0){
+    cont.innerHTML='<div style="color:var(--tinta-tenue);font-style:italic;text-align:center">No te enfrentaste a ninguna prueba química. La próxima vez, arriésgate.</div>';
+  }else{
+    temas.forEach(t=>{
+      const c=Estado.conceptos[t], info=(typeof CODEX!=='undefined')?CODEX.find(x=>x.id===t):null;
+      const total=c.ok+c.fallo, pct=total>0?Math.round(c.ok/total*100):0;
+      const clase=pct>=67?'dom':pct>=34?'med':'baj';
+      const etq=pct>=67?'Dominado':pct>=34?'A medias':'Flojo';
+      const row=document.createElement('div');row.className='exp-row';
+      row.innerHTML=`<span class="ex-ico">${info?info.ico:'⚗️'}</span>
+        <span class="ex-nom">${info?info.nombre:t}</span>
+        <span class="exp-bar"><i class="${clase}" style="width:${pct}%"></i></span>
+        <span class="ex-pct">${etq}</span>`;
+      cont.appendChild(row);
+    });
+  }
+  // rutas/finales restantes
+  const totalF=Object.keys(FINALES).length, vistosF=Object.keys(FINALES).filter(k=>FinalesVistos[k]).length;
+  $('exp-rutas').innerHTML=`Has descubierto <b style="color:var(--vitriolo)">${vistosF} de ${totalF}</b> destinos posibles. `+
+    (vistosF<totalF?'Otras decisiones te llevarán a finales que aún no has visto.':'¡Has hallado todos los destinos! Maestro absoluto.');
+}
+
+/* ============================================================
+   EL ALQUIMISTA DE VITRIOL
+   Novela visual en tres actos. La química es la HERRAMIENTA con la
+   que actúas sobre situaciones; acertar/fallar abre o cierra caminos.
+   Ejes: sospecha (corte), sienna (relación), verdad (conspiración).
+   ============================================================ */
+
+/* ---------- LOGROS ---------- */
+const LOGROS=[
+  {id:'primer_acierto',ico:'⚗️',nombre:'Aprendiz con suerte',desc:'Resolviste tu primer reto químico.'},
+  {id:'primer_fallo',ico:'💀',nombre:'Así se aprende',desc:'Fallaste. La ciencia es dura, el laboratorio más.'},
+  {id:'cinco_aciertos',ico:'🏅',nombre:'Mano firme',desc:'Resolviste 5 retos a lo largo de la obra.'},
+  {id:'diez_aciertos',ico:'🎖️',nombre:'Pulso de orfebre',desc:'Resolviste 10 retos. Empiezas a dar miedo.'},
+  {id:'sin_fallos',ico:'🌟',nombre:'Mente de mercurio',desc:'3+ retos seguidos sin un solo error.'},
+  {id:'primera_muerte',ico:'☠️',nombre:'Polvo eres',desc:'Perdiste toda tu esencia por primera vez.'},
+  {id:'inutil',ico:'🪦',nombre:'Ni una sola',desc:'Moriste sin resolver nada. Impresionante.'},
+  {id:'primer_final',ico:'📜',nombre:'El que llega al final',desc:'Completaste la obra de una forma u otra.'},
+  {id:'detective',ico:'🔍',nombre:'Nariz de sabueso',desc:'Reuniste todas las pistas de la conspiración.'},
+  {id:'aliada',ico:'🤝',nombre:'Mejor juntas',desc:'Te ganaste la confianza de Sienna.'},
+  {id:'rival',ico:'🗡️',nombre:'Cada cual a lo suyo',desc:'Sienna acabó siendo tu rival.'},
+  {id:'invisible',ico:'👤',nombre:'Sombra del gremio',desc:'Llegaste al Acto III sin levantar sospechas.'},
+  {id:'final_heroe',ico:'🛡️',nombre:'El que salvó Quimm',desc:'Final del héroe: expusiste la conspiración.'},
+  {id:'final_oro',ico:'👑',nombre:'La Gran Obra',desc:'Final dorado: entregaste el oro y triunfaste.'},
+  {id:'final_traidor',ico:'🎭',nombre:'El nuevo amo',desc:'Final oscuro: te quedaste con el poder.'},
+  {id:'final_vitriolo',ico:'🜍',nombre:'Hijo del Vitriolo',desc:'Final trascendente: superaste la alquimia misma.'},
+  {id:'sabelotodo',ico:'🧠',nombre:'Erudito insoportable',desc:'Resolviste 8+ retos con una precisión impecable.'},
+  {id:'todos_finales',ico:'🌌',nombre:'Señor del Destino',desc:'Descubriste los seis finales de la obra.'},
+  // --- logros negativos (medallas de la vergüenza) ---
+  {id:'primera_explosion',ico:'💥',nombre:'Tu primera explosión',desc:'Hiciste estallar algo que no debía estallar. Habrá más.'},
+  {id:'a_mazmorras',ico:'⛓️',nombre:'Huésped del Rey',desc:'Acabaste en las mazmorras. La decoración deja que desear.'},
+  {id:'fundidor',ico:'🫠',nombre:'Rey Midas al revés',desc:'Convertiste oro de verdad en un charco inútil. Talento.'},
+  {id:'envenenado',ico:'🤢',nombre:'Catador imprudente',desc:'Probaste algo que jamás debiste llevarte a la boca.'},
+  {id:'cobarde',ico:'🐔',nombre:'Mejor vivo que listo',desc:'Elegiste huir en vez de plantar cara. Comprensible.'},
+  {id:'manazas',ico:'🧯',nombre:'Manos de mantequilla',desc:'Fallaste tres pruebas en una sola partida. Bombero de guardia.'},
+];
+
+/* ---------- MENSAJES DE MUERTE ---------- */
+const MENSAJES_MUERTE=[
+  "Has reaccionado exotérmicamente con la realidad. Es decir: explotaste. Ibas regular, igualmente.",
+  "Tu última palabra fue «el potasio en agua no hace nada». Spoiler: hace TODO.",
+  "Aquí yace un alquimista que confundió la estequiometría con una pasta italiana. Descanse.",
+  "Inhalaste tus propios vapores pensando que «olían a ciencia». Olían a despedida.",
+  "Mezclaste ácido y base sin pensar. La explosión te dedica un sentido aplauso.",
+  "El universo aplicó la conservación de la materia: lo conservó todo menos a ti.",
+  "Moriste con dignidad. Mentira: resbalaste con mercurio derramado.",
+  "Tu pH interno llegó a 14. Eso, técnicamente, ya no es estar vivo.",
+  "Plot twist: el plomo no se vuelve oro porque insistas mucho. Buen intento.",
+  "Bebiste de un matraz sin etiqueta. Era cianuro. Siempre es cianuro. ETIQUETA tus frascos.",
+  "Añadiste agua sobre ácido concentrado. El ácido te respondió con un escupitajo a 100°C.",
+  "Tocaste sodio con las manos mojadas. Ahora eres un cartel de seguridad andante. Bueno, yacente.",
+  "La conspiración ganó un cadáver y perdió a su única amenaza. Cómo te ríes... no, espera, estás muerto.",
+];
+
+/* ---------- FINALES ---------- */
+const FINALES={
+  heroe:{ico:'🛡️',titulo:'El que salvó Quimm',tag:'Final del héroe',bueno:true,unlock:'final_heroe',
+    msg:'Expusiste al Canciller ante toda la corte con la prueba en la mano. La conspiración para falsificar la moneda del reino se derrumba. El Rey, por una vez sobrio de codicia, te nombra Protector del Gremio. No transmutaste plomo en oro: transmutaste a un becario en leyenda.'},
+  oro:{ico:'👑',titulo:'La Gran Obra',tag:'Final dorado',bueno:true,unlock:'final_oro',
+    msg:'Entregaste el oro y callaste lo que sabías. El Rey jamás supo que financiaba su propia ruina, pero tú vives entre sedas y matraces de cristal. Eres Alquimista Mayor. La conciencia pesa... aunque menos que el oro, todo hay que decirlo.'},
+  traidor:{ico:'🎭',titulo:'El Nuevo Amo del Vitriolo',tag:'Final oscuro',bueno:true,unlock:'final_traidor',
+    msg:'¿Exponer la conspiración? No: la heredaste. Con el oro y el secreto en tu poder, el Canciller trabaja ahora para ti. El reino no sabe que su nuevo titiritero huele a azufre y tiene veintipocos años. La alquimia te dio poder. El sarcasmo te dio estilo.'},
+  vitriolo:{ico:'🜍',titulo:'Hijo del Vitriolo',tag:'Final trascendente',bueno:true,unlock:'final_vitriolo',
+    msg:'Comprendiste lo que ni el maestro ni el Canciller vieron: la verdadera transmutación nunca fue del metal, sino de ti. Dejaste el oro, la corte y el rencor. El espíritu del Vitriolo te recibe como igual: «Solve et Coagula, mocoso. Por fin lo entiendes». Te conviertes en algo más que un alquimista.'},
+  digno:{ico:'⚗️',titulo:'Aprobado Raspado',tag:'Final neutro',bueno:true,
+    msg:'No salvaste el reino ni te quedaste el poder, pero sobreviviste y aprendiste de qué iba todo. El maestro suspira: «Bueno... apto». Que conste que «apto» también es aprobar. Y seguir vivo, en este oficio, ya es nota.'},
+  exilio:{ico:'🚪',titulo:'El Exilio del Becario',tag:'Final amargo',bueno:false,
+    msg:'Demasiados errores, demasiada sospecha. La corte te marca como peligroso y el gremio te repudia para salvar su pellejo. Huyes de Quimm con lo puesto y una verdad que nadie te creerá. Al menos sabes química. A los lobos del bosque, eso, les da exactamente igual.'},
+  prisionero:{ico:'⛓️',titulo:'Pudriéndose en Palacio',tag:'Final encarcelado',bueno:false,
+    msg:'Tu fuga fue un desastre y el Rey decidió que tu sitio era una celda con vistas a otra celda. Pasas los años rascando ecuaciones en la pared con una cuchara. Eso sí: eres, oficialmente, el preso más culto de Quimm. Un consuelo muy frío.'},
+  desaparecido:{ico:'🕳️',titulo:'Un Cabo Suelto Menos',tag:'Final silenciado',bueno:false,
+    msg:'La conspiración no deja testigos. Te «desapareciste» con la misma discreción con que se cuela el oro falso en la tesorería. Quimm nunca sabrá lo que descubriste, ni que existió un becario alquimista con más valor que suerte. Fin de la partida... y de ti.'},
+};
+
+/* ============================================================
+   ESCENAS — Cada una es un mini-arco con situación y tensión.
+   ============================================================ */
+const ESCENAS={
+
+/* ========================= ACTO I ========================= */
+/* --- Prólogo: el encargo envenenado --- */
+prologo:[
+  {cap:'Acto I · El encargo envenenado',fondo:['humo','#5fd6a4','sotano'],tinte:'radial-gradient(ellipse at 50% 30%,rgba(95,214,164,.10),transparent 60%)',fig:'maestro',
+   quien:'Maestro Cínabro',tag:'(con una sonrisa que no llega a los ojos)',di:'Ah, el nuevo aprendiz. Mírate: joven, vivo, lleno de ilusión... y maravillosamente prescindible. Tengo para ti el encargo más importante del reino. ¿Que por qué a ti? Precisamente porque no le importas a nadie. Es un cumplido. Más o menos.'},
+  {quien:'Maestro Cínabro',emo:'enfado',di:'El Rey Cuprio III quiere oro. Del de verdad, transmutado de plomo, antes del solsticio. Si sale bien: gloria para el gremio. Si sale mal: alguien sube al cadalso. Y mira, justo acabo de contratar a alguien perfecto para ese puesto. Pista: eres tú.'},
+  {quien:'Narrador',di:'Algo no cuadra. Cínabro lleva cuarenta años aquí y jamás cedió un encargo gordo a un aprendiz. ¿Por qué este? ¿Por qué tú? ¿Por qué ahora? Las tres respuestas huelen tan mal como el sótano.'},
+  {quien:'Maestro Cínabro',tag:'(te lanza cinco viales verdes)',di:'Toma. Esencia Vital, cinco dosis. Cada metedura de pata en el laboratorio te cuesta una. Cuando se agoten, el reino pierde un becario y yo gano una tarde libre. Procura no morir antes del primer experimento; sería un récord bochornoso incluso para ti.'},
+  {elige:'¿Cómo encaras este encargo que huele tan mal como el sótano?',
+   opciones:[
+     {txt:'Con cabeza fría: <span class=q>estudiar todo, no fiarme de nadie</span>.',va:'__sig',set:{ruta:'sabio'},efecto:{verdad:1},
+      fb:'<b>Senda del Estudio.</b> Decides observar antes que obedecer. El maestro no lo nota. Mejor así.'},
+     {txt:'Con descaro: <span class=q>improvisar y soltar pullas</span> mientras averiguo qué trama el viejo.',va:'__sig',set:{ruta:'astuto'},efecto:{sospecha:5},
+      fb:'<b>Senda del Pícaro.</b> Sonríes con insolencia. El viejo entorna los ojos. «Un bocazas. Durarás poco, pero será gracioso.» Llamar la atención tiene su precio.'},
+   ]},
+  {va:'cap1_lab',accion:()=>irA('cap1_lab')},
+],
+
+/* --- Mini-arco 1: el laboratorio trampa --- */
+cap1_lab:[
+  {cap:'Acto I · El laboratorio del gremio',fondo:['humo','#e0b84a','sotano'],fig:'maestro',
+   quien:'Maestro Cínabro',di:'Tu primer reactivo está en esa estantería. Tráeme el frasco de «sal de plomo» para empezar. Está junto a los demás. Sin etiquetar, claro: aquí confiamos en que sepas lo que haces. O en que mueras rápido.'},
+  {quien:'Narrador',di:'Hay tres frascos idénticos sin etiqueta. Tomar el equivocado podría ser letal. Tienes que identificar el acetato de plomo solo por sus propiedades.'},
+  {tema:'toxicos',pregunta:'<span class="q">El acetato de plomo(II) es famoso por un detalle macabro entre los antiguos. ¿Cuál te ayuda a identificarlo con seguridad?</span>',
+   intro:'Tres frascos. Uno es tu reactivo, otro es inútil, el tercero podría matarte.',
+   quien:'Maestro Cínabro',tag:'(observando si la cagas)',
+   opciones:[
+     {txt:'Era llamado «azúcar de plomo» por su sabor dulce... pero NUNCA se prueba: es tóxico. Lo identifico por su forma cristalina y solubilidad, sin catarlo.',ok:true,puntos:140,va:'__sig',
+      head:'Mano firme.',efecto:{verdad:1},
+      fb:'Correcto. Sabes la trampa y NO caes en ella. El maestro frunce el ceño, casi decepcionado de que sigas vivo.'},
+     {txt:'Lo pruebo con la lengua: si es dulce, es el acetato de plomo.',ok:false,va:'__sig',vidas:2,
+      head:'¡Casi te envenenas!',
+      fb:'¡NO! El plomo se bioacumula y daña el sistema nervioso. Que fuera dulce no lo hace seguro: por eso mató a tantos. Pierdes DOS dosis tosiendo.'},
+     {txt:'El que huela más fuerte a vinagre, por el grupo acetato.',ok:false,va:'__sig',
+      head:'Olfato engañado.',
+      fb:'El acetato puede oler a vinagre, sí, pero oler frascos al azar en este sótano es jugar a la ruleta rusa con la nariz. Te mareas. −1 dosis.'},
+     {txt:'Le añado agua: el de plomo no se disolverá nada.',ok:false,va:'__sig',
+      head:'Química al revés.',
+      fb:'El acetato de plomo SÍ es bastante soluble en agua (a diferencia de otras sales de plomo). Has invertido la propiedad. −1 dosis y un sermón.'},
+   ]},
+  {quien:'Maestro Cínabro',di:'Hmph. Vivo todavía. Sigue trabajando, criatura. Yo... tengo asuntos arriba. Con gente importante. No toques nada de la estantería del fondo.'},
+  {quien:'Narrador',di:'«La estantería del fondo.» Justo lo que no debías mirar. El maestro sube las escaleras y, por primera vez, estás solo en el laboratorio del gremio.'},
+  {elige:'El maestro se ha ido. ¿Qué haces con tu rato a solas?',
+   opciones:[
+     {txt:'Investigar <span class=q>la estantería prohibida del fondo</span>.',va:'cap1_secreto',
+      fb:'<b>Curiosidad peligrosa.</b> Te acercas. Hay papeles, frascos raros y un olor que no es de este siglo.'},
+     {txt:'Ser obediente y <span class=q>seguir con el encargo</span>. No quieres problemas.',va:'cap1_obediente',efecto:{sospecha:-5},
+      fb:'<b>Prudencia.</b> Sigues a lo tuyo. A veces no meter las narices es la jugada más lista. A veces.'},
+   ]},
+],
+
+cap1_secreto:[
+  {fondo:['estrellas','#5fd6a4','sotano'],fig:null,
+   quien:'Narrador',di:'Entre los papeles del fondo hay un pergamino con el sello del Canciller del reino. Y una nota a medio quemar: «...el oro no es para las arcas del Rey. Cuando haya suficiente, la moneda de Quimm valdrá lo que el barro. Cínabro lo sabe. El becario, no.»'},
+  {quien:'Narrador',tag:'(se te hiela la sangre)',di:'El becario eres tú. Acabas de descubrir que el encargo es la primera pieza de una conspiración: inundar el reino de oro falso para destruir el valor de su moneda. Y tú eres el cabeza de turco perfecto.'},
+  {pista:['nota_canciller','📜','Nota quemada con el sello del Canciller'],efecto:{verdad:2,sospecha:5}},
+  {quien:'Narrador',di:'Guardas la nota en tu túnica justo cuando una voz de mujer suena tras de ti, divertida y peligrosa a partes iguales.'},
+  {va:'cap1_sienna',accion:()=>irA('cap1_sienna')},
+],
+
+cap1_obediente:[
+  {fondo:['humo','#e0b84a','sotano'],fig:null,
+   quien:'Narrador',di:'Te concentras en el encargo. Pero al moler el plomo, una voz de mujer suena a tu espalda, divertida y peligrosa a partes iguales.'},
+  {va:'cap1_sienna',accion:()=>irA('cap1_sienna')},
+],
+
+/* --- Mini-arco 2: conoces a Sienna --- */
+cap1_sienna:[
+  {cap:'Acto I · La rival',fondo:['estrellas','#7c6cf0','sotano'],fig:'sienna',tinte:'radial-gradient(ellipse at 50% 40%,rgba(124,108,240,.10),transparent)',set:{conoceSienna:true},
+   quien:'Sienna',tag:'(apoyada en el quicio, brazos cruzados)',di:'Vaya, vaya. El nuevo juguete de Cínabro. Soy Sienna, alquimista de la corte. Llevo tres años intentando que ese fósil me ceda la Gran Obra y se la regala a... ¿esto? Dime que al menos sabes qué es un mol, antes de que me dé la risa.'},
+  {quien:'Sienna',di:'Te propongo algo. Te hago una pregunta. Si aciertas, me caes regular en vez de fatal, y quizá te cuente cosas que te conviene saber. Si fallas, me río de ti y me voy. ¿Hace?'},
+  {tema:'mol',pregunta:'<span class="q">Si tengo 2 moles de glucosa (C₆H₁₂O₆), ¿cuántas moléculas son?</span> (Nₐ = 6,022×10²³)',
+   intro:'Sienna te mide. Esta respuesta decide si te ve como colega o como estorbo.',
+   quien:'Sienna',tag:'(con una sonrisa de gato)',
+   vaSi:'cap1_sienna_bien', vaNo:'cap1_sienna_mal',
+   opciones:[
+     {txt:'≈ 1,2×10²⁴ moléculas (2 × 6,022×10²³).',ok:true,puntos:130,
+      head:'Sienna alza una ceja.',efecto:{sienna:30},
+      fb:'«Vaya. No eres un adorno con bata. 2 moles × Nₐ = 1,204×10²⁴.» Algo cambia en su mirada.'},
+     {txt:'6,022×10²³ moléculas (un mol).',ok:false,efecto:{sienna:-10},
+      head:'Sienna chasquea la lengua.',
+      fb:'Eso es UN mol. Tienes dos. Olvidaste multiplicar. «Adorno con bata, lo sabía», suspira.'},
+     {txt:'12,044×10²³ es lo mismo que 1,2×10²³.',ok:false,efecto:{sienna:-10},
+      head:'Error de notación.',
+      fb:'12,044×10²³ = 1,2044×10²⁴, no 10²³. Te falló la potencia de diez. Un orden de magnitud entero perdido.'},
+     {txt:'2 × 180 = 360 moléculas (usando la masa molar).',ok:false,efecto:{sienna:-10},
+      head:'Confundes masa con cantidad.',
+      fb:'360 sería gramos (2 mol × 180 g/mol), no moléculas. Mezclaste dos conceptos. Sienna pone los ojos en blanco.'},
+   ]},
+],
+
+cap1_sienna_bien:[
+  {fig:'sienna',quien:'Sienna',di:'Vale, no eres tan inútil como tu cara sugiere. Un consejo: vigila a Cínabro. Lleva meses subiendo a la torre del Canciller a horas en que la gente honrada duerme o roba. La Gran Obra apesta, y no es por el azufre.'},
+  {pista:['aviso_sienna','🔮','Sienna sospecha del Canciller y de Cínabro'],efecto:{verdad:1}},
+  {quien:'Sienna',tag:'(de salida)',di:'Si descubres algo gordo, ven a verme. Y si te mata un experimento, que sea uno espectacular. Odiaría aburrirme en tu funeral.'},
+  {va:'cap2_tesoreria',accion:()=>irA('cap2_tesoreria')},
+],
+
+cap1_sienna_mal:[
+  {fig:'sienna',quien:'Sienna',tag:'(ya de espaldas)',di:'Lo que imaginaba. Suerte con la Gran Obra, becario. La necesitarás, porque esto es una trampa y tú eres el queso. Pero ignórame: ¿qué sabré yo, que llevo aquí tres años sin que me derritan?'},
+  {efecto:{sienna:-5},quien:'Narrador',di:'Se va sin mirar atrás. Y sin querer, te ha dado la pista más valiosa: alguien tendió esta trampa. Solo falta el nombre.'},
+  {pista:['trampa','🪤','Alguien tendió esta trampa; eres el cebo'],efecto:{verdad:1}},
+  {va:'cap2_tesoreria',accion:()=>irA('cap2_tesoreria')},
+],
+
+/* ========================= ACTO II ========================= */
+/* --- NUDO DE CONSECUENCIA: la tesorería real (fallar → mazmorra) --- */
+cap2_tesoreria:[
+  {cap:'Acto II · La prueba del Rey',fondo:['estrellas','#e0b84a','corte'],fig:'rey',tinte:'radial-gradient(ellipse at 50% 30%,rgba(224,184,74,.13),transparent)',
+   quien:'Rey Cuprio III',tag:'(impaciente, mordisqueando un pollo)',emo:'grito',di:'¡Tú! ¡El becario alquimista! Antes de tu dichosa Gran Obra, un trabajito. Dicen que alguien ha colado oro FALSO en mi tesorería. Verifica este lingote real. Si es bueno, confiaré en ti. Si lo estropeas... bueno, tengo mazmorras vacías y mucho tiempo libre.'},
+  {quien:'Narrador',di:'El Rey te tiende un lingote y una mesa con reactivos. Esto huele a prueba doble: o demuestras tu valía, o la lías de una forma memorable. Y los guardias te miran con cariño de carcelero.'},
+  {pregunta:'<span class="q">Para comprobar si el lingote es oro auténtico SIN dañarlo, ¿qué ensayo eliges?</span>',
+   intro:'Un paso en falso aquí y el oro del Rey acaba en el suelo... fundido.',
+   quien:'Rey Cuprio III',tag:'(entrecerrando los ojos)',tema:'densidad',
+   vaSi:'cap2_tesoreria_bien', vaNo:'cap2_mazmorra_intro',
+   opciones:[
+     {txt:'Mido su densidad por el principio de Arquímedes (peso y volumen de agua desplazada): no lo daña y el oro da ~19,3 g/cm³.',ok:true,puntos:160,
+      head:'Impecable.',efecto:{sospecha:-5},
+      fb:'Sin tocar un pelo al lingote, confirmas que es oro auténtico. El Rey eructa, satisfecho: «Me caes bien, mocoso».'},
+     {txt:'Lo fundo para ver el color del metal líquido por dentro.',ok:false,vidas:1,
+      head:'¡NO, espera...!',unlock:'fundidor',efecto:{sospecha:30},
+      fb:'¿FUNDIR el oro del Rey para "ver el color"? El lingote se convierte en un charco humeante sobre la mesa real. El silencio es atronador.'},
+     {txt:'Le echo ácido nítrico encima a ver si reacciona.',ok:false,vidas:1,
+      head:'Mancha imperdonable.',efecto:{sospecha:25},
+      fb:'El ensayo del ácido SÍ sirve para distinguir oro... pero acabas de corroer y manchar el lingote real delante del Rey. Técnicamente correcto, políticamente suicida.'},
+     {txt:'Lo muerdo, como en las leyendas.',ok:false,vidas:1,
+      head:'Esto no es una leyenda.',unlock:'envenenado',efecto:{sospecha:20},
+      fb:'Morder oro solo demuestra que es blando... y que tú también eres un poco blando de la cabeza. Te dejas un diente y la dignidad.'},
+   ]},
+],
+
+cap2_tesoreria_bien:[
+  {fig:'rey',quien:'Rey Cuprio III',di:'¡Auténtico! Lo sabía. Bueno, no lo sabía, por eso te lo di a ti. Ve a tus cosas alquímicas, becario competente. Y como descubras quién mete oro falso en mi tesorería, te haré... algo bonito. Ya pensaré el qué.'},
+  {efecto:{verdad:1},pista:['oro_falso_reino','🪙','Alguien introduce oro falso en la tesorería real'],
+   quien:'Narrador',di:'Sales con la cabeza alta y una pista de oro: la conspiración ya está moviendo moneda falsa. Hora de ver al Canciller.'},
+  {va:'cap2_corte',accion:()=>irA('cap2_corte')},
+],
+
+/* --- RAMA MALA: la mazmorra y la fuga química --- */
+cap2_mazmorra_intro:[
+  {cap:'Acto II · Las mazmorras de Quimm',fondo:['humo','#5fd6a4','mazmorra'],fig:'rey',tinte:'radial-gradient(ellipse at 50% 60%,rgba(95,214,164,.12),transparent)',
+   quien:'Rey Cuprio III',tag:'(rojo de ira)',di:'¡MI ORO! ¡MI PRECIOSO ORO HECHO SOPA! ¡GUARDIAS! ¡Que se pudra en la mazmorra hasta que aprenda la diferencia entre "verificar" y "destrozar"!'},
+  {unlock:'a_mazmorras',efecto:{sospecha:20},
+   quien:'Narrador',di:'Te arrojan a una celda húmeda que huele a salitre y arrepentimiento. Barrotes de hierro, una antorcha lejana, un guardia roncando. Game over, ¿no? No. Eres alquimista. Y la química, querido preso, es la mejor ganzúa del mundo.'},
+  {quien:'Narrador',tag:'(inventario de fortuna)',di:'Registras tus bolsillos: el guardia no te quitó tu petaca de reactivos (craso error). Tienes un poco de ácido, sales varias y tu ingenio, que viene siendo lo único gratis. Los barrotes son de hierro.'},
+  {pregunta:'<span class="q">Quieres debilitar los barrotes de hierro para doblarlos. ¿Qué reacción química te conviene provocar sobre el hierro?</span>',
+   intro:'Primer obstáculo de la fuga: los barrotes.',
+   quien:'Narrador',tag:'(susurrando)',tema:'redox',
+   vaSi:'cap2_mazmorra_guardia', vaNo:'cap2_mazmorra_fallo1',
+   opciones:[
+     {txt:'Acelerar su oxidación/corrosión (formación de óxido de hierro) aplicando ácido y sal: el hierro corroído pierde resistencia.',ok:true,puntos:170,
+      head:'Los barrotes ceden.',
+      fb:'El ácido ataca el hierro (Fe → Fe²⁺ + H₂) y la sal acelera la corrosión electroquímica. Tras un rato, el metal se vuelve quebradizo. La química lenta y rencorosa, tu favorita.'},
+     {txt:'Congelar los barrotes con una reacción endotérmica hasta que se rompan solos.',ok:false,vidas:1,
+      head:'No tienes tanto frío disponible.',
+      fb:'Una mezcla endotérmica enfría algo, pero no lo suficiente para fracturar barrotes de hierro macizo. El hierro no es tan frágil al frío. Pierdes tiempo y una dosis de ánimo.'},
+     {txt:'Recubrirlos de oro para que pesen más y caigan.',ok:false,vidas:1,
+      head:'¿En serio?',
+      fb:'Acabas de proponer GASTAR oro (que no tienes) para que unos barrotes "caigan por su peso". El hierro fijado al muro no se cae porque pese más. Concéntrate.'},
+   ]},
+],
+
+cap2_mazmorra_fallo1:[
+  {fig:null,quien:'Narrador',di:'Tu intento no funciona y haces ruido. El guardia se remueve. Te quedas muy quieto, sudando. Respira. Tienes otra oportunidad, pero ya no hay margen para más torpezas: si vuelves a fallar, despertarás a todo el cuerpo de guardia.'},
+  {va:'cap2_mazmorra_guardia',accion:()=>irA('cap2_mazmorra_guardia')},
+],
+
+cap2_mazmorra_guardia:[
+  {fondo:['humo','#5fd6a4','mazmorra'],fig:null,
+   quien:'Narrador',di:'Barrotes vencidos. Pero el guardia bloquea el pasillo. Necesitas distraerlo sin pelear (eres alquimista, no bárbaro). Tienes los ingredientes para montar un buen espectáculo químico.'},
+  {pregunta:'<span class="q">Quieres crear una cortina de humo denso para colarte. ¿Qué opción genera mucho humo de forma rápida y relativamente segura?</span>',
+   intro:'El guardia mide el doble que tú. La sutileza es tu única arma.',
+   quien:'Narrador',tag:'(modo fugitivo)',tema:'gases',
+   vaSi:'cap2_fuga_exito', vaNo:'cap2_fuga_fallo',
+   opciones:[
+     {txt:'Una reacción que libere gas/vapor abundante (p. ej. azúcar + un oxidante adecuado) para una humareda espesa que tape la visión.',ok:true,puntos:160,
+      head:'¡Humo por todas partes!',
+      fb:'Una buena humareda densa y opaca llena el pasillo. El guardia tose, maldice y manotea a ciegas. Tú te deslizas como una sombra con bata.'},
+     {txt:'Prender fuego directamente a la paja de la celda.',ok:false,vidas:2,
+      head:'Mal cálculo.',unlock:'primera_explosion',
+      fb:'El fuego abierto en un espacio cerrado consume tu oxígeno y te delata con luz y calor. Casi te asfixias y el guardia te ve perfectamente entre las llamas. Pésima fuga.'},
+     {txt:'Liberar un gas tóxico para dormir al guardia.',ok:false,vidas:2,
+      head:'Ni sabes cuál ni en qué dosis.',unlock:'primera_explosion',
+      fb:'Improvisar gases tóxicos en un sótano sin ventilación es la forma más rápida de dormirte TÚ primero (y para siempre). El humo inofensivo era la jugada, no el veneno.'},
+   ]},
+],
+
+cap2_fuga_fallo:[
+  {fig:null,quien:'Narrador',tag:'(las cosas se tuercen)',di:'El plan sale fatal. El alboroto despierta a media guarnición. Te reducen entre cuatro guardias y te devuelven a la celda, ahora con grilletes y vigilancia doble. Tu aventura alquímica termina aquí, entre rejas y arrepentimiento.'},
+  {final:'prisionero'},
+],
+
+cap2_fuga_exito:[
+  {fondo:['estrellas','#5fd6a4','corte'],fig:null,
+   quien:'Narrador',tag:'(libre, oliendo a humo)',di:'Sales de las mazmorras tosiendo pero LIBRE. Nadie sabe que escapaste. Y ahora tienes algo más que ganas de aprobar: tienes una cuenta pendiente con quien te metió ahí. La conspiración va a conocer tu lado rencoroso.'},
+  {efecto:{verdad:1,sospecha:10},pista:['fuga_mazmorra','⛓️','Escapaste de las mazmorras reales con química'],unlock:'cobarde',
+   quien:'Narrador',di:'Te cuelas de vuelta en el gremio por una ventana. Hora de averiguar quién mueve los hilos: el Canciller te espera, sin saber que ya no eres el becario manso de ayer.'},
+  {va:'cap2_corte',accion:()=>irA('cap2_corte')},
+],
+
+/* ========================= ACTO II ========================= */
+/* --- Mini-arco 3: la corte y el Canciller --- */
+cap2_corte:[
+  {cap:'Acto II · La corte de Quimm',fondo:['estrellas','#e0b84a','corte'],fig:'cortesano',tinte:'radial-gradient(ellipse at 50% 30%,rgba(224,184,74,.12),transparent)',
+   quien:'Canciller Galio',tag:'(sonrisa de seda, ojos de hielo)',di:'Así que tú eres el prodigio del que habla Cínabro. El Reino entero espera tu oro, muchacho. Yo, personalmente, me encargaré de que cada lingote llegue a... buen puerto. Dime, ¿avanza la transmutación?'},
+  {quien:'Narrador',di:'El Canciller Galio. Si la nota no miente, este tipo planea arruinar Quimm con tu oro. Y te sonríe como quien ya ha calculado cuánto vales muerto. Cada palabra que sueltes le sube o le baja la sospecha sobre ti. Sin presión.'},
+  {elige:'El Canciller espera tu respuesta. ¿Cómo juegas tus cartas?',
+   opciones:[
+     {txt:'Fingir entusiasmo de becario ingenuo: <span class=q>«¡Va genial, Excelencia!»</span>',va:'__sig',efecto:{sospecha:-10},
+      fb:'<b>Máscara de tonto útil.</b> Galio se relaja: te cree inofensivo. Justo donde quieres estar.'},
+     {txt:'Tantearle con una pregunta afilada sobre <span class=q>el destino del oro</span>.',va:'__sig',efecto:{sospecha:15,verdad:2},
+      fb:'<b>Jugada arriesgada.</b> Galio entrecierra los ojos. Aprendes algo por cómo reacciona... pero ahora estás en su radar.'},
+   ]},
+  {quien:'Canciller Galio',di:'Tenemos un... problemilla. Cierto lingote que me trajeron resultó ser pirita. Vil pirita. Necesito a alguien capaz de distinguir el oro del fraude antes de que llegue a las arcas. ¿Eres ese alguien, o solo otro mocoso con bata?'},
+  {quien:'Narrador',tag:'(el cerebro a mil)',di:'Prueba doble: si aciertas, Galio te abre su círculo. Y de paso te enseña, sin querer, cómo piensa él mismo colar el oro falso. Información gratis disfrazada de examen.'},
+  {tema:'densidad',pregunta:'<span class="q">Te dan dos lingotes dorados idénticos a la vista. ¿Cómo confirmas cuál es oro y cuál pirita (FeS₂) con un solo ensayo fiable?</span>',
+   intro:'El Canciller te observa. Acertar te abre su círculo. Fallar te marca como inútil... o como amenaza.',
+   quien:'Canciller Galio',tag:'(tamborileando los dedos)',
+   vaSi:'cap2_galio_confia', vaNo:'cap2_galio_duda',
+   opciones:[
+     {txt:'Mido la densidad: el oro ronda 19,3 g/cm³; la pirita, ~5 g/cm³. Imposible de falsear con el peso.',ok:true,puntos:150,
+      head:'Impecable.',efecto:{sospecha:5},
+      fb:'Correcto: la densidad delata el fraude al instante. Galio sonríe. «Servirás.» Y eso, contigo, es peligroso.'},
+     {txt:'Lo juzgo por el brillo y el color: el oro es más cálido.',ok:false,vidas:1,efecto:{sospecha:10},
+      head:'Te delata.',
+      fb:'La pirita engaña justo por el color; por eso es el «oro de los tontos». Galio te mira con desdén: «Un tonto. O peor, un tonto que finge.»'},
+     {txt:'Pruebo con un imán: el oro es magnético y la pirita no.',ok:false,vidas:1,efecto:{sospecha:8},
+      head:'Al revés.',
+      fb:'El oro NO es magnético. La pirita tampoco lo es de forma notable. Mal criterio. El Canciller anota algo sobre ti.'},
+     {txt:'Las rayo con una llave: el oro se raya, la pirita no.',ok:false,vidas:1,efecto:{sospecha:8},
+      head:'Dureza confundida.',
+      fb:'El oro es blando (Mohs ~2,5) y la pirita dura (~6): es la pirita la que raya, no al revés. Casi inviertes la prueba.'},
+   ]},
+],
+
+cap2_galio_confia:[
+  {fig:'cortesano',quien:'Canciller Galio',di:'Excelente. Te confiaré la cámara del tesoro para que verifiques cada lingote. Sé fiel, muchacho, y compartirás la fortuna que viene. Sé... curioso, y compartirás la suerte de los curiosos. Que es breve.'},
+  {pista:['acceso_camara','🗝️','Acceso a la cámara del tesoro de Galio'],efecto:{verdad:2}},
+  {quien:'Narrador',di:'Ahora estás dentro de su círculo. Peligroso, pero es donde se esconden las pruebas que necesitas. Decides ir a ver a Sienna con lo que sabes.'},
+  {va:'cap2_pacto',accion:()=>irA('cap2_pacto')},
+],
+
+cap2_galio_duda:[
+  {fig:'cortesano',quien:'Canciller Galio',tag:'(gélido)',di:'Mmm. Cínabro exagera tus talentos. Te vigilaré muy de cerca, muchacho. Por tu bien, no me des motivos.'},
+  {quien:'Narrador',di:'Acabas de entrar en su lista de cabos sueltos. Mal sitio. Y los cabos sueltos, en esta corte, suelen tener accidentes.'},
+  {accion:()=>{ irA(Estado.sospecha>=45 ? 'cap2_emboscada' : 'cap2_pacto'); }},
+],
+
+/* --- RAMA MALA: emboscada del Canciller (si sospecha alta) --- */
+cap2_emboscada:[
+  {cap:'Acto II · La copa envenenada',fondo:['humo','#7c6cf0','corte'],fig:'cortesano',tinte:'radial-gradient(ellipse at 50% 40%,rgba(124,108,240,.12),transparent)',
+   quien:'Canciller Galio',tag:'(con dos copas y una sonrisa)',di:'Antes de que te vayas, muchacho... un brindis. Por tu brillante futuro. Bebe conmigo. Sería de muy mala educación rechazarlo. Y yo, con los maleducados, me pongo... creativo.'},
+  {quien:'Narrador',tag:'(alarmas internas a tope)',di:'Una copa para ti, otra para él. Galio sonríe demasiado. Hueles algo raro en tu copa: un tufillo a almendras amargas. Tu cerebro de alquimista grita una palabra: cianuro. Tienes que actuar sin que se note.'},
+  {tema:'toxicos',pregunta:'<span class="q">Tu copa huele a almendras amargas (señal clásica de cianuro). ¿Qué haces para salir vivo sin delatarte?</span>',
+   intro:'Si bebes, mueres. Si la tiras a la cara, te delatas. Piensa rápido.',
+   quien:'Canciller Galio',tag:'(esperando que bebas)',
+   vaSi:'cap2_emboscada_exito', vaNo:'cap2_emboscada_fallo',
+   opciones:[
+     {txt:'Fingir un brindis, cambiar las copas con un descuido teatral y dejar que él se enfrente a su propia trampa.',ok:true,puntos:180,
+      head:'Jaque al Canciller.',efecto:{verdad:2},
+      fb:'El olor a almendras amargas delata el cianuro; tú no bebes, pero con un golpe de teatro intercambias las copas. Galio palidece al ver la suya vacía en tu mano. Ventaja: tú.'},
+     {txt:'Beber un sorbo pequeño, total una dosis baja no hará nada.',ok:false,vidas:3,
+      head:'El cianuro no negocia.',unlock:'envenenado',
+      fb:'El cianuro bloquea la respiración celular (inhibe la citocromo c oxidasa): incluso poca cantidad es brutal. Te desplomas mientras Galio chasquea la lengua, decepcionado de lo fácil que fue.'},
+     {txt:'Tirarle la copa a la cara y salir corriendo.',ok:false,vidas:2,
+      head:'Confirmas todas sus sospechas.',efecto:{sospecha:20},
+      fb:'Le confirmas que sabías lo del veneno, o sea, que sabes demasiado. Sus guardias te cazan en el pasillo antes de la segunda esquina.'},
+   ]},
+],
+
+cap2_emboscada_fallo:[
+  {fig:null,quien:'Narrador',tag:'(se tuerce del todo)',di:'La jugada sale mal y los guardias del Canciller te rodean. Galio se acerca, te quita la copa de la mano y susurra: «Lástima. Prometías». Lo último que ves es el techo dorado de la corte. La conspiración gana, y tú pierdes hasta el nombre.'},
+  {final:'desaparecido'},
+],
+
+cap2_emboscada_exito:[
+  {fig:'cortesano',quien:'Canciller Galio',tag:'(conteniendo la furia)',di:'Vaya... reflejos. Eres más listo de lo que tu expediente sugiere. Esto no acaba aquí, muchacho.'},
+  {efecto:{verdad:1},pista:['copa_veneno','☠️','Galio intentó envenenarte: la conspiración te quiere muerto'],
+   quien:'Narrador',di:'Sales de la corte con el corazón a mil y una certeza nueva: ya no es un juego de pistas, quieren matarte. Necesitas un aliado, ya. Sienna es tu única opción.'},
+  {va:'cap2_pacto',accion:()=>irA('cap2_pacto')},
+],
+
+/* --- Mini-arco 4: el pacto con Sienna (depende de la relación) --- */
+cap2_pacto:[
+  {cap:'Acto II · Aliados y enemigos',fondo:['estrellas','#7c6cf0','golem'],fig:'sienna',tinte:'radial-gradient(ellipse at 50% 40%,rgba(124,108,240,.10),transparent)',
+   quien:'Narrador',di:'Encuentras a Sienna en el viejo laboratorio bajo la torre. Tu relación con ella pesa ahora: lo que pasó antes decide cómo te recibe.'},
+  {accion:()=>{ irA(Estado.sienna>=25 ? 'cap2_pacto_aliada' : 'cap2_pacto_fria'); }},
+],
+
+cap2_pacto_aliada:[
+  {fig:'sienna',unlock:'aliada',quien:'Sienna',tag:'(seria por una vez)',di:'Has venido. Bien. Mira: el Canciller usa el oro de Cínabro para acuñar moneda falsa. Cuando haya bastante en circulación, el valor del dinero de Quimm se hundirá. Compra el reino por cuatro chavos. Y vosotros dos, los alquimistas, cargáis con la culpa.'},
+  {quien:'Sienna',di:'Necesitamos una prueba irrefutable. Hay un sótano donde funden el oro: lo guarda un gólem de plomo encantado, sordo a las palabras pero sensible a la química. Si lo cruzamos, tendremos la prueba. ¿Lo hacemos juntas?'},
+  {efecto:{verdad:2,sienna:10},pista:['plan_fundicion','⚒️','La fundición clandestina la guarda un gólem'],
+   quien:'Sienna',di:'Voy contigo. No por ti, que conste. Por mí, por mi reino, y porque tu cara cuando aciertas algo difícil es lo más cerca que estoy de divertirme últimamente.'},
+  {va:'cap3_golem',accion:()=>irA('cap3_golem')},
+],
+
+cap2_pacto_fria:[
+  {fig:'sienna',unlock:'rival',quien:'Sienna',tag:'(distante, calculadora)',di:'¿Tú? ¿Aquí? Pensaba que no durarías ni una semana. Mira, becario, sé lo que trama el Canciller: moneda falsa, ruina del reino, vosotros de chivos expiatorios. Pero no confío en ti. Iré por mi cuenta. Que gane el mejor alquimista.'},
+  {efecto:{sienna:-5},quien:'Narrador',di:'Sienna se convierte en tu rival en esta carrera. Os enfrentaréis al mismo peligro, pero cada cual por su lado. Bajo la torre, el gólem de plomo que guarda la fundición ya ha despertado.'},
+  {pista:['plan_fundicion','⚒️','La fundición clandestina la guarda un gólem'],efecto:{verdad:2}},
+  {va:'cap3_golem',accion:()=>irA('cap3_golem')},
+],
+
+/* --- RAMA MALA: te desmaya el gas y despiertas atado --- */
+cap3_inconsciente:[
+  {cap:'Acto II · Atado en la fundición',fondo:['humo','#e0593f','golem'],fig:null,tinte:'radial-gradient(ellipse at 50% 60%,rgba(224,89,63,.16),transparent)',
+   quien:'Narrador',tag:'(todo da vueltas)',di:'Despiertas con un dolor de cabeza épico y las muñecas atadas a una columna. El gólem te ha dejado inconsciente y los secuaces del Canciller te han maniatado «para interrogarte luego». Spoiler: el interrogatorio no incluye café.'},
+  {unlock:'primera_explosion',efecto:{sospecha:15},
+   quien:'Narrador',di:'Buenas noticias: te ataron las manos pero te dejaron la petaca de reactivos en el cinturón (estos villanos no contratan por currículum). Las cuerdas son fibra vegetal. Tienes un frasco de ácido y la cabeza, cuando deje de latir.'},
+  {tema:'redox',pregunta:'<span class="q">Quieres deshacer las cuerdas (fibra natural, básicamente celulosa). ¿Qué reactivo de tu petaca las destruye?</span>',
+   intro:'Tienes los dedos justos para alcanzar UN frasco. Elige con cabeza.',
+   quien:'Narrador',tag:'(estirando los dedos)',
+   vaSi:'cap3_libre', vaNo:'cap3_inconsciente_fallo',
+   opciones:[
+     {txt:'Ácido fuerte: ataca y degrada la celulosa de la fibra hasta que las cuerdas ceden.',ok:true,puntos:160,
+      head:'Las cuerdas se deshacen.',
+      fb:'El ácido carcome la fibra vegetal (hidrólisis de la celulosa) y las cuerdas se rompen como pan viejo. Te liberas, eso sí, con cuidado de no rociarte tú mismo.'},
+     {txt:'Agua: las mojas para que se hinchen y se aflojen.',ok:false,vidas:1,
+      head:'Al contrario.',
+      fb:'Las fibras vegetales mojadas se CONTRAEN y aprietan más el nudo. Acabas de ajustarte tus propias esposas. Genial.'},
+     {txt:'Sal: la frotas para que «corroa» la cuerda.',ok:false,vidas:1,
+      head:'La sal no corroe fibra.',
+      fb:'La sal corroe metales por vía electroquímica, no deshace cuerdas vegetales. Te quedas igual de atado, ahora salado.'},
+   ]},
+],
+
+cap3_inconsciente_fallo:[
+  {fig:null,quien:'Narrador',di:'Tu primer intento no sirve y oyes pasos acercándose. El corazón se te dispara. Te queda un movimiento antes de que vuelvan: o aciertas, o este será un capítulo muy corto y muy desagradable.'},
+  {tema:'redox',pregunta:'<span class="q">Última oportunidad. Las cuerdas son fibra vegetal. ¿Qué las destruye?</span>',
+   intro:'Los pasos están casi encima.',
+   quien:'Narrador',tag:'(sin margen)',
+   vaSi:'cap3_libre', vaNo:'cap3_capturado',
+   opciones:[
+     {txt:'Aplicar ácido para degradar la celulosa de la fibra.',ok:true,puntos:140,
+      head:'¡Justo a tiempo!',
+      fb:'El ácido deshace la fibra y te zafas un segundo antes de que abran la puerta. Te escondes entre las sombras de la fundición.'},
+     {txt:'Tirar con fuerza bruta hasta romperlas.',ok:false,vidas:2,
+      head:'No eres tan fuerte.',
+      fb:'Eres alquimista, no leñador. Las cuerdas aguantan y solo consigues despellejarte las muñecas justo cuando entran los secuaces.'},
+     {txt:'Quemarlas con la antorcha cercana.',ok:false,vidas:2,
+      head:'Atado. Junto al fuego.',
+      fb:'Acercar fuego a unas cuerdas que envuelven TUS muñecas es un plan con un fallo evidente. Te chamuscas y gritas, lo que avisa a todos.'},
+   ]},
+],
+
+cap3_capturado:[
+  {fig:null,quien:'Narrador',tag:'(se acabó)',di:'Los secuaces entran y te encuentran forcejeando como un escarabajo bocarriba. El Canciller en persona aparece, chasquea la lengua y ordena «que desaparezca». Tu carrera alquímica termina en el fondo de la fundición, junto al oro falso. Al menos haces buena compañía.'},
+  {final:'desaparecido'},
+],
+
+cap3_libre:[
+  {fondo:['estrellas','#5fd6a4','golem'],fig:null,
+   quien:'Narrador',tag:'(libre y furioso)',di:'Libre. Y muy enfadado. Te has librado del gólem por la vía humillante, pero ahora conoces la fundición por dentro y tienes una motivación nueva: venganza con bata de laboratorio. La cámara con las pruebas está a un pasillo de distancia.'},
+  {efecto:{verdad:1},pista:['atado_fundicion','⛓️','Te capturaron en la fundición y escapaste'],
+   va:'cap3_camara',accion:()=>irA('cap3_camara')},
+],
+
+/* --- Mini-arco 5: el gólem guardián (clímax del Acto II) --- */
+cap3_golem:[
+  {cap:'Acto II · El guardián de la fundición',fondo:['fuego','#e0593f','golem'],fig:'golem',tinte:'radial-gradient(ellipse at 50% 70%,rgba(224,89,63,.14),transparent)',
+   quien:'Gólem de Plomo',tag:'(voz de tonelada)',di:'IN-TRU-SO. ESTE O-RO NO ES PA-RA TI. SOY PLO-MO. SOY EL CE-RRO-JO. PA-RA PA-SAR, DE-MUES-TRA QUE DO-MI-NAS LA MA-TE-RIA, O TE FUN-DO CON E-LLA.'},
+  {quien:'Narrador',di:'El gólem no entiende razones, solo reacciones. Para abrir la cámara hay que neutralizar las defensas químicas que lo rodean. Esto es trabajo fino: cada error aquí abajo es mortal de verdad.'},
+  {tema:'gases',pregunta:'<span class="q">El gólem suelta una nube de gas cloro (Cl₂) para asfixiarte. Tienes tiosulfato e hidróxido a mano. ¿Cómo lo neutralizas, YA?</span>',
+   intro:'Esto no es un examen. Es respirar o no respirar en los próximos diez segundos.',
+   quien:'Gólem de Plomo',tag:'(la cámara se llena de gas verde)',
+   vaSi:'__sig', vaNo:'cap3_inconsciente',
+   opciones:[
+     {txt:'Rociar con disolución básica (NaOH): la base reacciona con el cloro y lo neutraliza.',ok:true,puntos:160,
+      head:'Vuelves a respirar.',efecto:{verdad:1},
+      fb:'Bordado: Cl₂ + 2NaOH → NaCl + NaClO + H₂O. Así se fabrica la lejía, por cierto. El gólem gruñe, casi impresionado de que no estés en el suelo.'},
+     {txt:'Aguantar la respiración y cruzar corriendo la nube.',ok:false,vidas:2,
+      head:'Spoiler: no llegas.',
+      fb:'El cloro te ataca ojos y mucosas aunque no lo tragues a gusto. Cruzar una nube densa conteniendo el aire es regalarle tus pulmones al gólem. Te desplomas tosiendo.'},
+     {txt:'Echar agua, que el cloro es soluble y desaparece.',ok:false,vidas:2,
+      head:'Lo repartes, no lo quitas.',
+      fb:'El cloro se disuelve un poco, pero forma HCl y HClO: sigue siendo veneno, ahora en formato charco. El gas te tumba mientras te felicitas por la idea.'},
+     {txt:'Prender una llama para «quemar» el gas.',ok:false,vidas:2,
+      head:'Premio a la peor idea.',
+      fb:'¿Fuego en una sala llena de gas reactivo y vapores de fundición? Acabas de completar el triángulo del fuego con tu propia cara. La onda te deja KO.'},
+   ]},
+  {quien:'Gólem de Plomo',di:'BIEN. PE-RO EL CE-RRO-JO FI-NAL ES MÍ-O. ES-TOY HE-CHO DE PLO-MO. PA-RA A-PA-GAR-ME DE-BES SA-BER QUÉ ME EN-VE-NE-NA. ¿QUÉ DE-BI-LI-TA A UN SER DE PLO-MO?'},
+  {tema:'coordinacion',pregunta:'<span class="q">Para «desactivar» al gólem de plomo necesitas un agente quelante, como hacen los médicos con el envenenamiento por plomo. ¿Qué hace un quelante como el EDTA?</span>',
+   intro:'El gólem se inclina. La prueba final para abrir la cámara.',
+   quien:'Gólem de Plomo',
+   vaSi:'cap3_camara', vaNo:'cap3_camara',
+   opciones:[
+     {txt:'Atrapa los iones de plomo formando un complejo estable y soluble, retirándolos de circulación.',ok:true,puntos:170,
+      head:'El gólem se desploma, sereno.',efecto:{verdad:1},
+      fb:'Exacto: el EDTA «secuestra» el Pb²⁺ en un quelato soluble que se elimina. Así se trata el saturnismo. El gólem se quiebra: «GRA-CIAS POR... EL DES-CAN-SO».'},
+     {txt:'Oxida el plomo a un gas que se evapora.',ok:false,vidas:1,
+      head:'Concepto erróneo.',
+      fb:'Un quelante no oxida ni gasifica: forma un complejo de coordinación. Y el plomo no se va volando. −1 dosis.'},
+     {txt:'Disuelve el plomo en ácido fuerte hasta hacerlo desaparecer.',ok:false,vidas:1,
+      head:'No es eso.',
+      fb:'Eso es disolución ácida, no quelación. El quelante actúa rodeando el ion con enlaces, no destruyéndolo con ácido. −1 dosis.'},
+     {txt:'Calienta el plomo hasta que se funde y deja de moverse.',ok:false,vidas:1,
+      head:'Fuerza bruta inútil.',
+      fb:'Fundir no es envenenar ni neutralizar químicamente; el plomo fundido es aún más peligroso. El quelante es la respuesta elegante. −1 dosis.'},
+   ]},
+],
+
+cap3_camara:[
+  {cap:'Acto II · La prueba en la mano',fondo:['estrellas','#e0b84a','golem'],fig:null,tinte:'radial-gradient(ellipse at 50% 40%,rgba(224,184,74,.12),transparent)',
+   quien:'Narrador',di:'La cámara se abre. Dentro: moldes de moneda, lingotes de oro alquímico a medio fundir y el libro de cuentas del Canciller Galio. La prueba completa de la conspiración, con su sello y su firma.'},
+  {pista:['libro_cuentas','📕','Libro de cuentas firmado por Galio: la prueba definitiva'],efecto:{verdad:3,sospecha:5}},
+  {accion:()=>{
+     const todas=['nota_canciller','libro_cuentas','plan_fundicion'].every(tienePista);
+     if(Estado.pistas.length>=4)desbloquear('detective');
+     if(todas)desbloquear('detective');
+     if(Estado.sospecha<=20)desbloquear('invisible');
+     if(Estado.aciertos>=8 && Estado.intentos>0 && Estado.aciertos===Estado.intentos)desbloquear('sabelotodo');
+  }},
+  {quien:'Narrador',di:'Tienes en las manos lo que puede salvar o condenar al reino. Y de pronto, pasos. Cínabro y Galio bajan a la fundición. Te escondes. Escuchas. Y entiendes que ha llegado el momento de decidir quién eres realmente.'},
+  {va:'acto3',accion:()=>irA('acto3')},
+],
+
+/* ========================= ACTO III ========================= */
+/* --- Mini-arco 6: la elección final --- */
+acto3:[
+  {cap:'Acto III · La elección',fondo:['humo','#5fd6a4','corte'],fig:'maestro',tinte:'radial-gradient(ellipse at 50% 40%,rgba(95,214,164,.10),transparent)',
+   quien:'Maestro Cínabro',tag:'(a Galio, sin verte)',di:'El becario casi lo ha logrado, Excelencia. Una transmutación más y tendréis oro de sobra. El chico no sospecha nada. Cuando todo estalle, será su firma la que cuelgue de la horca, no la nuestra.'},
+  {quien:'Canciller Galio',di:'Perfecto. Que el mocoso termine la Gran Obra y luego... ya sabes. Un accidente de laboratorio. Tan comunes entre aprendices torpes.'},
+  {quien:'Narrador',tag:'(el corazón te va a mil)',di:'Ya lo sabes todo. Tienes la prueba, tienes el saber y, por primera vez, una decisión que es solo tuya. Lo que hiciste hasta aquí —lo que sabes, a quién te ganaste, cuánto te vigilan— decide qué caminos siguen abiertos. No la fastidies ahora, que vienes de lejos.'},
+  {accion:()=>{}},
+  {elige:'Sales de las sombras... ¿o no? ¿Qué clase de alquimista eres al final de todo?',
+   opciones:[
+     {txt:'🛡️ <span class=q>Exponerlos.</span> Subir a la corte con la prueba y desenmascarar la conspiración.',va:'final_heroe_check',
+      fb:'<b>El camino del héroe.</b> Aprietas el libro de cuentas contra el pecho y subes las escaleras hacia la luz.'},
+     {txt:'👑 <span class=q>Completar el oro</span> y entregárselo al Rey, callando lo que sabes. Que sea problema de otros.',va:'final_oro_check',
+      fb:'<b>El camino del oro.</b> Decides que la gloria y la seguridad valen más que una verdad incómoda.'},
+     {txt:'🎭 <span class=q>Chantajear a Galio.</span> No exponerlo: heredar su conspiración y quedarte el poder.',va:'final_traidor_check',
+      fb:'<b>El camino oscuro.</b> Una sonrisa lenta. ¿Por qué derribar un imperio cuando puedes robarlo?'},
+     {txt:'🜍 <span class=q>Renunciar a todo.</span> El oro, la corte, la venganza. Buscar la transmutación verdadera.',va:'final_vitriolo_check',
+      fb:'<b>El camino del Vitriolo.</b> Sueltas el libro. Hay algo más grande que el oro, y por fin lo ves.'},
+   ]},
+],
+
+/* --- Comprobaciones de final: el desempeño decide si el camino culmina --- */
+final_heroe_check:[
+  {fondo:['estrellas','#e0b84a','corte'],fig:'cortesano',
+   quien:'Narrador',di:'Irrumpes en la corte. Para que el Rey te crea por encima de su Canciller, tu palabra debe pesar: necesitas pruebas sólidas y no estar tú mismo bajo sospecha.'},
+  {accion:()=>{
+     const pruebas = tienePista('libro_cuentas') && (tienePista('nota_canciller')||tienePista('plan_fundicion'));
+     if(pruebas && Estado.sospecha<55 && Estado.aciertos>=5){ irFinal('heroe'); }
+     else if(pruebas && Estado.aciertos>=4){ irFinal('heroe'); }
+     else if(Estado.sospecha>=70){ irFinal('exilio'); }
+     else { irFinal('digno'); }
+  }},
+],
+
+final_oro_check:[
+  {fondo:['burbujas','#e0b84a','corte'],fig:'rey',
+   quien:'Rey Cuprio III',tag:'(deslumbrado por el oro)',di:'¡ORO! ¡Oro de verdad! Pero antes de coronarte, una última prueba de que dominas el arte: dime por qué ningún alquimista logró jamás esto por pura química, para saber que eres digno y no un farsante con suerte.'},
+  {tema:'nuclear',pregunta:'<span class="q">¿Por qué la química clásica NUNCA pudo transmutar plomo (Z=82) en oro (Z=79)?</span>',
+   intro:'Tu última respuesta. El trono o el ridículo.',
+   quien:'Rey Cuprio III',
+   vaSi:'final_oro_si', vaNo:'final_oro_no',
+   opciones:[
+     {txt:'Porque las reacciones químicas cambian electrones, no el núcleo: el número de protones define el elemento. Cambiarlo es física nuclear.',ok:true,puntos:200,
+      head:'¡Magistral!',
+      fb:'Pasar de 82 a 79 protones exige tocar el núcleo, no la química. El Rey queda boquiabierto. Tu oro «alquímico» nunca fue químico, pero eso es otra historia.'},
+     {txt:'Porque les faltaba un caldero suficientemente grande.',ok:false,
+      head:'Ridículo cortesano.',
+      fb:'El caldero jamás fue el problema; el NÚCLEO sí. Aun así, en esta corte de aduladores, casi cuela.'},
+     {txt:'Porque no rezaban bastante al dios Mercurio.',ok:false,
+      head:'Superstición.',
+      fb:'La devoción no cambia números atómicos. Aunque viendo a esta corte, uno duda.'},
+     {txt:'Porque el plomo y el oro pesan distinto y no se puede igualar la masa.',ok:false,
+      head:'Casi.',
+      fb:'No es la masa: son los PROTONES. Cerca del concepto, lejos de la diana.'},
+   ]},
+],
+final_oro_si:[{accion:()=>irFinal('oro')}],
+final_oro_no:[{accion:()=>{ Estado.aciertos>=4 ? irFinal('oro') : irFinal('digno'); }}],
+
+final_traidor_check:[
+  {fondo:['humo','#e0593f','corte'],fig:'cortesano',
+   quien:'Canciller Galio',tag:'(acorralado)',di:'¿Chantaje? Tú... mocoso insolente. ¿Qué te hace pensar que puedes ocupar mi lugar en algo tan delicado como destruir un reino desde dentro?'},
+  {tema:'aleaciones',pregunta:'<span class="q">Galio te pone a prueba: «Si fueras a falsificar moneda, ¿qué aleación usarías para que el oro falso engañe al peso Y al ensayo?»</span>',
+   intro:'Demuéstrale que eres más peligroso que él, o te eliminará.',
+   quien:'Canciller Galio',
+   vaSi:'final_traidor_si', vaNo:'final_traidor_no',
+   opciones:[
+     {txt:'Tungsteno chapado en oro: su densidad (19,25) es casi idéntica a la del oro (19,3), engaña la balanza.',ok:true,puntos:200,
+      head:'Galio palidece.',
+      fb:'Correcto y escalofriante: el tungsteno tiene casi la densidad del oro, el truco clásico de falsificación. «...Trabajarás para mí», susurra. No: él trabajará para ti.'},
+     {txt:'Plomo chapado en oro; nadie nota la diferencia.',ok:false,
+      head:'Amateur.',
+      fb:'El plomo (11,3) es mucho menos denso que el oro (19,3): cualquier ensayo de densidad lo detecta. Galio se relaja: no le das miedo.'},
+     {txt:'Latón pulido; brilla igual que el oro.',ok:false,
+      head:'Demasiado obvio.',
+      fb:'El latón es ligero y se oxida; engaña a la vista un día y al ensayo ninguno. Galio sonríe con desprecio.'},
+     {txt:'Oro de verdad pero más fino; nadie se queja del oro.',ok:false,
+      head:'Eso no es falsificar.',
+      fb:'Si usas oro real no hay fraude ni beneficio. Has entendido mal el negocio criminal que pretendías heredar.'},
+   ]},
+],
+final_traidor_si:[{accion:()=>irFinal('traidor')}],
+final_traidor_no:[{accion:()=>{ Estado.sospecha>=60 ? irFinal('exilio') : irFinal('digno'); }}],
+
+final_vitriolo_check:[
+  {fondo:['estrellas','#5fd6a4','ritual'],fig:'espiritu',tinte:'radial-gradient(ellipse at 50% 40%,rgba(95,214,164,.12),transparent)',
+   quien:'Espíritu del Vitriolo',tag:'(materializándose en vapor verde)',di:'Soltaste el oro. Soltaste la venganza. Interesante, mocoso. Soy el Vitriolo, el alma del ácido. Solo me muestro ante quien renuncia al metal por el saber. Pero el saber tiene precio. Una última verdad y serás algo más que un alquimista.'},
+  {tema:'redox',pregunta:'<span class="q">«V.I.T.R.I.O.L.» y mi nombre antiguo apuntan al ácido sulfúrico. En la reacción Zn + H₂SO₄ → ZnSO₄ + H₂, ¿qué ocurre, en esencia?</span>',
+   intro:'La transmutación final no es del plomo. Es tuya.',
+   quien:'Espíritu del Vitriolo',
+   vaSi:'final_vitriolo_si', vaNo:'final_vitriolo_no',
+   opciones:[
+     {txt:'Una redox: el Zn se oxida (0→+2) cediendo electrones, y el H⁺ se reduce (+1→0) formando H₂ gas.',ok:true,puntos:220,
+      head:'El vapor verde te corona.',
+      fb:'Impecable. Transferencia de electrones: eso es transmutar de verdad, mover lo invisible. «Solve et Coagula, mocoso. Por fin lo entiendes.»'},
+     {txt:'Solo una neutralización ácido-base, sin más.',ok:false,
+      head:'Te falta lo esencial.',
+      fb:'Hay metal libre volviéndose ion y H⁺ volviéndose gas: es REDOX. Esas burbujas son electrones en movimiento, no charla ácido-base.'},
+     {txt:'Se oxida el hidrógeno y se reduce el zinc.',ok:false,
+      head:'Invertido.',
+      fb:'Al revés: el H gana electrones (se reduce) y el Zn los pierde (se oxida). El espíritu suspira humo.'},
+     {txt:'No pasa nada relevante, solo se mezclan.',ok:false,
+      head:'Ceguera.',
+      fb:'¿Nada? Se desprende hidrógeno gaseoso y se forma una sal nueva. Todo cambia. Mirar y no ver es el peor pecado del alquimista.'},
+   ]},
+],
+final_vitriolo_si:[{accion:()=>irFinal('vitriolo')}],
+final_vitriolo_no:[{accion:()=>{ Estado.aciertos>=6 ? irFinal('vitriolo') : irFinal('digno'); }}],
+
+};
+
+/* ============================================================
+   CODEX / GRIMORIO — conceptos de química para repasar.
+   Se consulta en cualquier momento; los que han aparecido en
+   tu partida quedan "estudiados".
+   ============================================================ */
+const CODEX=[
+  {id:'mol', ico:'🔢', nombre:'El mol y el número de Avogadro',
+   texto:'Un mol son 6,022×10²³ entidades (Nₐ). Para pasar de moles a partículas se multiplica por Nₐ; para pasar a gramos se multiplica por la masa molar (g/mol). No confundas cantidad (moles, partículas) con masa (gramos): son magnitudes distintas unidas por la masa molar.'},
+  {id:'estequiometria', ico:'⚖️', nombre:'Estequiometría',
+   texto:'Los coeficientes de una ecuación ajustada dan las proporciones en moles entre reactivos y productos. El reactivo limitante es el que se agota primero y fija cuánto producto se forma. Siempre se trabaja en moles, no en gramos directos.'},
+  {id:'densidad', ico:'🪙', nombre:'Densidad e identificación de metales',
+   texto:'Densidad = masa / volumen. Es una propiedad característica: el oro ronda 19,3 g/cm³ y la pirita ~5 g/cm³, por eso la densidad delata el fraude aunque el color engañe. El oro además es blando (Mohs ~2,5) y no magnético.'},
+  {id:'redox', ico:'🔋', nombre:'Reacciones redox',
+   texto:'En una redox hay transferencia de electrones: la especie que los pierde se oxida (sube su número de oxidación) y la que los gana se reduce (baja). Regla mnemónica: «oxidación es pérdida, reducción es ganancia» (OIL RIG en inglés). En Zn + H₂SO₄ el Zn se oxida (0→+2) y el H⁺ se reduce (+1→0).'},
+  {id:'ph', ico:'🧪', nombre:'Ácidos, bases y pH',
+   texto:'pH = −log[H⁺]. pH < 7 ácido, = 7 neutro, > 7 básico. Una neutralización ácido fuerte + base fuerte da sal neutra + agua (pH≈7). Seguridad: al diluir ácido concentrado, se añade el ÁCIDO sobre el AGUA, nunca al revés, porque el proceso es muy exotérmico.'},
+  {id:'gases', ico:'☁️', nombre:'Gases peligrosos y su neutralización',
+   texto:'El cloro (Cl₂) es tóxico e irritante. Se neutraliza con disolución básica: Cl₂ + 2NaOH → NaCl + NaClO + H₂O (la misma reacción que produce la lejía). Frente a gases nocivos, diluir con agua no basta: hay que reaccionarlos o ventilar.'},
+  {id:'coordinacion', ico:'🔗', nombre:'Quelatos y compuestos de coordinación',
+   texto:'Un agente quelante (como el EDTA) rodea un ion metálico con varios enlaces, formando un complejo estable y soluble que lo «secuestra». Se usa en medicina contra el envenenamiento por metales pesados: atrapa el Pb²⁺ y permite eliminarlo.'},
+  {id:'toxicos', ico:'☠️', nombre:'Plomo y metales pesados',
+   texto:'El plomo es un veneno acumulativo (bioacumulación): imita y desplaza metales esenciales como el calcio en huesos y enzimas. Su acetato fue llamado «azúcar de plomo» por su sabor dulce, pero NUNCA se prueba: la toxicidad es química, no radiactiva. El plomo, de hecho, blinda la radiación.'},
+  {id:'nuclear', ico:'⚛️', nombre:'El núcleo define al elemento',
+   texto:'El número atómico Z (número de protones) define qué elemento es. Las reacciones químicas solo reorganizan electrones y enlaces: NO cambian el núcleo. Por eso la alquimia clásica jamás pudo transmutar plomo (Z=82) en oro (Z=79); eso exige física nuclear, no química.'},
+  {id:'aleaciones', ico:'🥇', nombre:'Aleaciones y fraude de metales',
+   texto:'Una aleación mezcla metales para lograr propiedades concretas. En la falsificación, el truco clásico es el tungsteno (densidad 19,25 g/cm³) chapado en oro (19,3): engaña a la balanza porque sus densidades casi coinciden. Por eso un ensayo fiable combina densidad y otras pruebas.'},
+];
+
+iniciarJuego();
+</script>
+</body>
+</html>
