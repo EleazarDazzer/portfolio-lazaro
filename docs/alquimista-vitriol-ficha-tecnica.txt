@@ -1,0 +1,133 @@
+# El Alquimista de Vitriol — Ficha Técnica
+
+Novela visual educativa de química ambientada en una fantasía medieval alquímica, con tono cómico-ácido. El jugador encarna a un aprendiz alquimista al que el gremio encarga la Gran Obra —transmutar plomo en oro— sin contarle que también es el chivo expiatorio perfecto si algo sale mal. Concebida como pieza de portfolio.
+
+---
+
+## Resumen
+
+| | |
+|---|---|
+| **Nombre** | El Alquimista de Vitriol |
+| **Tipo** | Novela visual educativa (química, nivel FP / universidad) |
+| **Tono** | Cómico-ácido sobre estética solemne |
+| **Plataforma** | Navegador de escritorio (Chrome, Edge, Brave, Firefox) |
+| **Tecnología** | HTML + CSS + JavaScript puro, sin dependencias externas |
+| **Entregable** | Un único archivo `El_Alquimista_de_Vitriol.html` + carpeta `media/` |
+| **Idioma** | Español |
+| **Estado** | Jugable de principio a fin |
+
+---
+
+## Características principales
+
+- **Narrativa ramificada** en tres actos con múltiples finales y ramas de consecuencia.
+- **Preguntas de química integradas en la trama**: las decisiones técnicas (identificar compuestos, elegir reacciones, ensayos no destructivos) afectan al desarrollo de la historia.
+- **Sistema de Esencia (vidas)**: fallar resta esencia; quedarse a cero conduce a una pantalla de muerte.
+- **Ejes narrativos ocultos** (sospecha de la corte, relación con Sienna, verdad) que condicionan finales y castigos sin mostrarse en la interfaz.
+- **Dos personajes simultáneos en escena** con vídeo animado; el que habla se destaca y el que escucha se atenúa.
+- **Efectos de emoción** sobre los personajes (enfado, grito, sorpresa, miedo) con sacudida, destello de color y sonido.
+- **Sistema de tres grimorios** (partidas) con guardado persistente en el navegador.
+- **Audio generado en tiempo real** con la Web Audio API (sin archivos de sonido).
+- **Salón de Logros**, **Grimorio** (codex de conceptos químicos), **Cuaderno de pistas** y **Galería de destinos** (finales descubiertos).
+
+---
+
+## Arquitectura técnica
+
+### Pila
+
+HTML5, CSS3 y JavaScript ES6+ sin frameworks ni librerías externas. Todo el juego reside en un único archivo HTML autocontenido con un bloque `<style>` y un bloque `<script>`, acompañado de una carpeta `media/` con los vídeos.
+
+### Audio
+
+Síntesis en tiempo real mediante la **Web Audio API**. No hay ficheros de audio: tonos, efectos y música se generan con osciladores y ganancias. El sistema enruta el sonido por dos buses independientes (efectos y música) que permiten controlar ambos volúmenes por separado.
+
+### Fondos y personajes (vídeo)
+
+- **Personajes (6):** vídeo WebM/VP9 vertical con fondo croma verde recortado, integrados sobre la escena.
+- **Fondos (5):** vídeo WebM/VP9 horizontal de la escena completa.
+- Todos los vídeos se cargan creando un elemento `<video>` nuevo por reproducción, técnica necesaria para una reproducción fiable al abrir el juego mediante `file://`.
+
+### Persistencia
+
+- **Grimorios:** tres ranuras de guardado independientes en `localStorage`, con metadatos (acto, esencia, logros).
+- **Preferencias:** volumen de música y de efectos, velocidad del texto, avance automático y opacidad de la caja de diálogo, también en `localStorage`.
+
+---
+
+## Interfaz (dirección de arte)
+
+Inspirada en la estética de **Hollow Knight**: minimalismo elegante sobre fondo oscuro, con el "vacío" como elemento de diseño. Acento principal en **oro viejo** sobre negro cálido.
+
+- **Tipografía:** Cinzel y Cinzel Decorative (títulos y elementos de interfaz), EB Garamond (diálogo y opciones).
+- **Menú de inicio:** título con resplandor tenue, filigranas finas, selección marcada con ornamentos `❖`, entrada animada escalonada y transición a la pantalla de selección de grimorio con aparición secuencial de las ranuras.
+- **Caja de diálogo:** minimal, sin bordes pesados, con degradado a negro, nombre del hablante en versalitas, filigrana de separación y animación de entrada. Opacidad ajustable.
+- **Respuestas:** rejilla 2×2 con texto centrado; barra de progreso para el avance automático.
+- **HUD en juego:** esencia representada con redomas alquímicas en línea fina (esquina superior derecha) e iconos discretos para Pistas, Grimorio, Logros, Opciones, Sonido, Pantalla completa y Menú.
+- **Transiciones de acto:** pantalla a negro estilo Hollow Knight con sigilo girando y título del acto en versalitas.
+- **Avisos y confirmaciones:** notificaciones (toast) de logro y modales de confirmación con estética propia, sin diálogos nativos del navegador.
+
+---
+
+## Contenido
+
+- **3 actos:** el sótano-laboratorio del gremio (Acto I), la corte real de Quimm (Acto II/III) y la fundición / cámara del gólem, con desvíos a mazmorra y al ritual final.
+- **Múltiples finales** (buenos y malos) y ramas de consecuencia con castigo.
+- **Logros** desbloqueables por hallazgos y decisiones.
+- **Grimorio (codex)** con conceptos químicos comentados.
+- **Preguntas de química** repartidas por la historia (identificación de compuestos, ensayos, reacciones).
+
+### Personajes
+
+| Personaje | Rol |
+|---|---|
+| El Alquimista | Protagonista (el jugador) |
+| Maestro Cínabro | Mentor que delega la Gran Obra |
+| Sienna | Rival y posible aliada |
+| Canciller Galio | Cortesano de intenciones turbias |
+| Rey Cuprio III | Monarca impaciente |
+| Gólem de Plomo | Amenaza de la fundición |
+
+---
+
+## Estructura de archivos
+
+```
+El_Alquimista_de_Vitriol.html      Juego completo (HTML + CSS + JS)
+media/
+  ├── p_alquimista.webm            Personajes (vídeo, croma verde)
+  ├── p_maestro.webm
+  ├── p_sienna.webm
+  ├── p_cortesano.webm
+  ├── p_golem.webm
+  ├── p_rey.webm
+  ├── bg_sotano.webm               Fondos (vídeo, escena completa)
+  ├── bg_corte.webm
+  ├── bg_golem.webm
+  ├── bg_mazmorra.webm
+  └── bg_ritual.webm
+```
+
+---
+
+## Cómo ejecutar
+
+1. Descargar `El_Alquimista_de_Vitriol.html` junto con la carpeta `media/` completa (ambos en la misma ubicación).
+2. Abrir el HTML en un navegador de escritorio (Chrome, Edge, Brave o Firefox).
+
+> **Recomendación:** para una experiencia óptima de los vídeos de fondo, servir los archivos mediante un servidor local (por ejemplo `python3 -m http.server` y abrir `http://localhost:8000/`) o publicarlos en un alojamiento web. Al abrir con doble clic (`file://`) algunos navegadores limitan la reproducción de vídeo.
+
+---
+
+## Notas de producción
+
+- **Recursos audiovisuales** generados con un flujo de IA local (ComfyUI / FLUX). Los personajes se generan sobre fondo croma verde para un recorte limpio.
+- **Vídeos en WebM/VP9** para una reproducción consistente y un recorte por croma fiable. La resolución de origen de los fondos es 720p; para nitidez a pantalla completa en monitores de alta resolución conviene regenerarlos a mayor tamaño.
+- **Sin dependencias externas ni conexión a red**: el juego funciona de forma totalmente local salvo por la carga de las tipografías web.
+
+---
+
+## Créditos
+
+Diseño, narrativa, programación y dirección de arte del proyecto: autoría propia. Tipografías: Cinzel y EB Garamond (Google Fonts). Inspiración visual de interfaz: Hollow Knight (Team Cherry), usada como referencia estética.
